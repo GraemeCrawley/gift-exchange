@@ -269,3 +269,77 @@ def claim_by_token(conn, participant: Participant) -> None:
 
 def mark_link_saved(conn, pid: int) -> None:
     conn.execute("UPDATE participant SET link_saved_at=? WHERE id=?", (now(), pid))
+
+
+MAX_ITEMS = 50
+
+
+def get_recipient(conn, pid: int) -> Participant | None:
+    """Who this person is buying for — only while the draw is current."""
+    row = conn.execute(
+        """SELECT r.* FROM assignment a
+           JOIN participant r ON r.id = a.receiver_id
+           JOIN participant g ON g.id = a.giver_id
+           JOIN exchange e ON e.id = g.exchange_id
+           WHERE a.giver_id=? AND e.draw_state='current'""",
+        (pid,),
+    ).fetchone()
+    return _participant(row)
+
+
+def _item(row) -> WishItem:
+    return WishItem(id=row["id"], participant_id=row["participant_id"], text=row["text"], url=row["url"])
+
+
+def list_items(conn, pid: int) -> list[WishItem]:
+    rows = conn.execute("SELECT * FROM wish_item WHERE participant_id=? ORDER BY position, id", (pid,))
+    return [_item(r) for r in rows]
+
+
+def clean_url(raw: str | None) -> str | None:
+    from urllib.parse import urlsplit
+
+    value = (raw or "").strip()
+    if not value:
+        return None
+    if len(value) > 2000:
+        raise ValidationError("Link must be 2000 characters or fewer.")
+    if "://" not in value and ":" not in value.split("/", 1)[0]:
+        value = "https://" + value
+    parts = urlsplit(value)
+    if parts.scheme.lower() not in ("http", "https") or not parts.netloc:
+        raise ValidationError("Links must start with http:// or https://")
+    return value
+
+
+def add_item(conn, pid: int, text: str, url: str | None) -> WishItem:
+    text = _clean_text(text, "Wish", 300)
+    url = clean_url(url)
+    with transaction(conn):
+        count, maxpos = conn.execute(
+            "SELECT count(*), coalesce(max(position), -1) FROM wish_item WHERE participant_id=?", (pid,)
+        ).fetchone()
+        if count >= MAX_ITEMS:
+            raise ValidationError(f"A wish list can have at most {MAX_ITEMS} items.")
+        cur = conn.execute(
+            "INSERT INTO wish_item(participant_id, text, url, position, created_at) VALUES (?,?,?,?,?)",
+            (pid, text, url, maxpos + 1, now()),
+        )
+    return _item(conn.execute("SELECT * FROM wish_item WHERE id=?", (cur.lastrowid,)).fetchone())
+
+
+def _require_item(conn, pid: int, item_id: int) -> None:
+    if conn.execute("SELECT 1 FROM wish_item WHERE id=? AND participant_id=?", (item_id, pid)).fetchone() is None:
+        raise LookupError(item_id)
+
+
+def update_item(conn, pid: int, item_id: int, text: str, url: str | None) -> None:
+    _require_item(conn, pid, item_id)
+    text = _clean_text(text, "Wish", 300)
+    url = clean_url(url)
+    conn.execute("UPDATE wish_item SET text=?, url=? WHERE id=? AND participant_id=?", (text, url, item_id, pid))
+
+
+def delete_item(conn, pid: int, item_id: int) -> None:
+    _require_item(conn, pid, item_id)
+    conn.execute("DELETE FROM wish_item WHERE id=? AND participant_id=?", (item_id, pid))

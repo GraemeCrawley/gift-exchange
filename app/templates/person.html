@@ -1,6 +1,76 @@
 {% extends "base.html" %}
+{% from "_sharebox.html" import sharebox %}
 {% block title %}{{ ex.name }}{% endblock %}
 {% block content %}
+{% if not p.link_saved %}
+<div class="alert alert-reminder stack-sm">
+  <span>Haven't saved your link yet? Copy it, share it to yourself, or bookmark this page.</span>
+  {{ sharebox(full_url('/p/' ~ token), "Copy", "reminder", ex.name, tips=True) }}
+  <form method="post" action="{{ url('/p/' ~ token ~ '/saved') }}" class="row">
+    <input type="hidden" name="saved" value="on">
+    <button class="btn btn-outline-reminder">I've saved it</button>
+  </form>
+</div>
+{% endif %}
+
 {% include "_exchange_header.html" %}
-<p>Hi {{ p.display_name }}.</p>
+
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+{% if recipient %}
+<div class="recipient">
+  <span>{{ p.display_name }}, you're buying for</span>
+  <strong>{{ recipient.display_name }}</strong>
+</div>
+<h2>{{ recipient.display_name }}'s wish list</h2>
+{% if recipient_items %}
+<ul class="items">
+  {% for it in recipient_items %}
+  <li class="item">
+    <span>{{ it.text }}</span>
+    {% if it.url %}<a href="{{ it.url }}" target="_blank" rel="noopener noreferrer nofollow">View link</a>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="fine">{{ recipient.display_name }} hasn't added anything yet. Check back later.</p>
+{% endif %}
+{% elif ex.draw_state == 'stale' %}
+<p class="alert alert-warn">The organizer is updating the draw, check back soon.</p>
+{% else %}
+<p class="alert alert-warn">Names haven't been drawn yet. Check back soon.</p>
+{% endif %}
+
+<hr>
+<h2 id="my-list">Your wish list</h2>
+<p class="fine">Whoever drew you sees this. One idea per item; a link is optional.</p>
+<ul class="items">
+  {% for it in my_items %}
+  <li class="item">
+    <details>
+      <summary>
+        <span>{{ it.text }}</span>
+        {% if it.url %}<span class="fine link-preview">{{ it.url }}</span>{% endif %}
+      </summary>
+      <form method="post" action="{{ url('/p/' ~ token ~ '/items/' ~ it.id ~ '/edit') }}" class="stack-sm">
+        <label for="t-{{ it.id }}">Wish</label>
+        <input id="t-{{ it.id }}" name="text" maxlength="300" required value="{{ it.text }}">
+        <label for="u-{{ it.id }}">Link (optional)</label>
+        <input id="u-{{ it.id }}" name="url" maxlength="2000" inputmode="url" value="{{ it.url or '' }}">
+        <button class="btn btn-outline-primary">Save</button>
+      </form>
+      <form method="post" action="{{ url('/p/' ~ token ~ '/items/' ~ it.id ~ '/delete') }}">
+        <button class="btn btn-outline-danger">Remove</button>
+      </form>
+    </details>
+  </li>
+  {% endfor %}
+</ul>
+<form method="post" action="{{ url('/p/' ~ token ~ '/items') }}" class="card stack-sm">
+  <label for="new-text">Add an item</label>
+  <input id="new-text" name="text" maxlength="300" required placeholder="What would you like?">
+  <label for="new-url">Link (optional)</label>
+  <input id="new-url" name="url" maxlength="2000" inputmode="url" placeholder="https://">
+  <button class="btn btn-primary">Add to my list</button>
+</form>
 {% endblock %}
