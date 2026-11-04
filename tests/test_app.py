@@ -69,3 +69,26 @@ def test_header_shows_countdown_and_limit(client, app):
     page = client.get("/p/" + people(app, admin)["Alex"].personal_token + "?later=1").text
     assert "10 days to go" in page
     assert "Gift limit" in page and "$50" in page
+
+
+def test_money_adds_dollar_sign_to_plain_numbers():
+    from app.web import money
+
+    assert money("50") == "$50"
+    assert money("25.50") == "$25.50"
+    assert money(" 50 ") == "$50"
+    assert money("$50") == "$50"
+    assert money("about 40") == "about 40"
+    assert money(None) == ""
+
+
+def test_plain_number_limit_saved_and_shown_in_dollars(client, app):
+    from tests.helpers import drawn, exchange_for, people
+
+    admin = drawn(client, app)
+    client.post(admin + "/settings", data={"name": "X", "price_limit": "50"})
+    assert exchange_for(app, admin).price_limit == "$50"
+    c = __import__("tests.helpers", fromlist=["conn_for"]).conn_for(app)
+    c.execute("UPDATE exchange SET price_limit='40'")  # saved before this fix
+    assert "limit $40" in client.get(admin).text
+    assert "$40" in client.get("/p/" + people(app, admin)["Alex"].personal_token + "?later=1").text

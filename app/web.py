@@ -35,6 +35,11 @@ def countdown(iso: str | None, today=None) -> str:
 templates.env.filters["countdown"] = countdown
 
 
+from app.repo import money  # noqa: E402  (shared with saving)
+
+templates.env.filters["money"] = money
+
+
 def _static_version() -> str:
     """Short hash of the CSS and JS, added to their links so phones fetch new copies after a deploy."""
     import hashlib

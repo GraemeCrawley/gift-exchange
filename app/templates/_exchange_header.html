@@ -10,7 +10,7 @@
   {% endif %}
   {% if ex.price_limit %}
   <div class="fact">
-    <span class="fact-big">{{ ex.price_limit }}</span>
+    <span class="fact-big">{{ ex.price_limit|money }}</span>
     <span class="fact-small">Gift limit</span>
   </div>
   {% endif %}

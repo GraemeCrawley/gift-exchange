@@ -18,7 +18,7 @@
 <h1>{{ ex.name }}</h1>
 
 <details class="card">
-  <summary>Exchange details{% if ex.exchange_date or ex.price_limit %}: {{ ex.exchange_date|nice_date }}{% if ex.exchange_date and ex.price_limit %} · {% endif %}{% if ex.price_limit %}limit {{ ex.price_limit }}{% endif %}{% endif %}</summary>
+  <summary>Exchange details{% if ex.exchange_date or ex.price_limit %}: {{ ex.exchange_date|nice_date }}{% if ex.exchange_date and ex.price_limit %} · {% endif %}{% if ex.price_limit %}limit {{ ex.price_limit|money }}{% endif %}{% endif %}</summary>
   <form method="post" action="{{ url(base ~ '/settings') }}" class="stack">
     <label for="ex-name">Exchange name</label>
     <input id="ex-name" name="name" maxlength="80" required value="{{ ex.name }}">
@@ -29,7 +29,7 @@
       </div>
       <div class="stack-sm">
         <label for="ex-limit">Price limit</label>
-        <input id="ex-limit" name="price_limit" maxlength="20" placeholder="e.g. $50 (optional)" value="{{ ex.price_limit or '' }}">
+        <input id="ex-limit" name="price_limit" maxlength="20" placeholder="e.g. $50 (optional)" value="{{ ex.price_limit|money }}">
       </div>
     </div>
     <button class="btn btn-outline-primary">Save details</button>

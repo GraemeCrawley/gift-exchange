@@ -1,5 +1,6 @@
 """All database access. Functions take a sqlite3 connection (autocommit mode)."""
 
+import re
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -153,10 +154,18 @@ def _clean_date(value: str | None) -> str | None:
         raise ValidationError("Exchange date must be a valid date.") from None
 
 
+def money(value: str | None) -> str:
+    """'50' -> '$50'. Anything that isn't a plain number is shown as typed."""
+    value = (value or "").strip()
+    return "$" + value if re.fullmatch(r"\d+(\.\d{1,2})?", value) else value
+
+
 def update_settings(conn, ex_id: int, name: str, exchange_date: str | None, price_limit: str | None) -> None:
     name = _clean_text(name, "Exchange name", 80)
     date = _clean_date(exchange_date)
     limit = _clean_text(price_limit, "Price limit", 20, required=False)
+    if limit:
+        limit = money(limit)
     conn.execute(
         "UPDATE exchange SET name=?, exchange_date=?, price_limit=? WHERE id=?", (name, date, limit, ex_id)
     )
