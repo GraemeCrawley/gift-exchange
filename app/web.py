@@ -27,6 +27,9 @@ def url(request: Request, path: str) -> str:
 
 def full_url(request: Request, path: str) -> str:
     """Full URL a person can copy and text to someone."""
+    base = getattr(request.app.state, "public_base_url", "")
+    if base:
+        return base + path
     proto = request.headers.get("x-forwarded-proto", request.url.scheme)
     host = request.headers.get("x-forwarded-host", request.headers.get("host", request.url.netloc))
     return f"{proto}://{host}{url(request, path)}"

@@ -55,7 +55,7 @@ def test_redraw_keeps_links_and_items(client, app):
     alex = people(app, admin)["Alex"]
     client.post(f"/p/{alex.personal_token}/items", data={"text": "Board game", "url": ""})
     add_people(client, admin, ["Taylor"])
-    client.post(admin + "/draw")
+    client.post(admin + "/draw", data={"confirm": "on"})
     page = saved_page(client, alex.personal_token)
     assert "Board game" in page
     assert recipient_of(app, alex) is not None

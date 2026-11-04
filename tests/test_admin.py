@@ -151,11 +151,21 @@ def test_impossible_household_message(client, app):
 
 def test_double_draw_post_is_safe(client, app):
     admin = drawn(client, app)
-    assert client.post(admin + "/draw").status_code == 303
     c = conn_for(app)
-    rows = c.execute("SELECT giver_id, receiver_id FROM assignment").fetchall()
-    assert len(rows) == 4
-    assert len({r[1] for r in rows}) == 4
+    before = c.execute("SELECT giver_id, receiver_id FROM assignment ORDER BY giver_id").fetchall()
+    r = client.post(admin + "/draw")  # e.g. Back + resubmit
+    assert r.status_code == 400
+    after = c.execute("SELECT giver_id, receiver_id FROM assignment ORDER BY giver_id").fetchall()
+    assert [tuple(x) for x in before] == [tuple(x) for x in after]
+
+
+def test_redraw_requires_confirm(client, app):
+    admin = drawn(client, app)
+    page = client.get(admin).text
+    assert "Everyone gets a new person. Links and wish lists are kept." in page
+    assert client.post(admin + "/draw", data={"confirm": "on"}).status_code == 303
+    rows = conn_for(app).execute("SELECT receiver_id FROM assignment").fetchall()
+    assert len({r[0] for r in rows}) == 4
 
 
 def test_settings_saved_and_shown(client, app):

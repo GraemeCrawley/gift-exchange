@@ -5,6 +5,7 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -46,6 +47,7 @@ def create_app(db_path: str | None = None, root_path: str | None = None) -> Fast
     )
     app.state.db_path = db_path or settings.db_path
     app.state.prefix = (settings.root_path if root_path is None else root_path).rstrip("/")
+    app.state.public_base_url = settings.public_base_url
     conn = db.connect(app.state.db_path)
     db.init_schema(conn)
     conn.close()
@@ -63,6 +65,15 @@ def create_app(db_path: str | None = None, root_path: str | None = None) -> Fast
         if exc.status_code == 404:
             return web.not_found(request)
         return web.render(request, "error.html", {"message": exc.detail}, status=exc.status_code)
+
+    @app.exception_handler(RequestValidationError)
+    async def bad_request(request: Request, exc: RequestValidationError):
+        return web.not_found(request)
+
+    @app.exception_handler(Exception)
+    async def crash(request: Request, exc: Exception):
+        logging.getLogger("gift_exchange").exception("unhandled error")
+        return web.render(request, "error.html", {"message": "Sorry, something broke on our side. Please try again."}, status=500)
 
     @app.get("/health")
     def health():

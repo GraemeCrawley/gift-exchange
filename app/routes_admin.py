@@ -113,8 +113,13 @@ def reset(request: Request, token: str, pid: int, conn=Depends(get_conn)):
 
 
 @router.post("/draw")
-def draw(request: Request, token: str, conn=Depends(get_conn)):
-    return _act(request, conn, token, lambda ex: repo.run_draw(conn, ex.id), "drawn")
+def draw(request: Request, token: str, confirm: str = Form(""), conn=Depends(get_conn)):
+    def action(ex):
+        if ex.draw_state != "none" and confirm != "on":
+            raise repo.ValidationError("Names are already drawn. Tick the box to confirm re-drawing.")
+        repo.run_draw(conn, ex.id)
+
+    return _act(request, conn, token, action, "drawn")
 
 
 @router.get("/manifest.webmanifest")

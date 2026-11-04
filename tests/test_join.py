@@ -37,12 +37,31 @@ def test_claim_redirects_to_personal_and_shows_save_step(client, app):
 
 
 def test_second_claim_same_name_409(client, app):
+    from fastapi.testclient import TestClient
+
+    admin = drawn(client, app)
+    alex = people(app, admin)["Alex"]
+    client.post(f"{join_path(app, admin)}/claim/{alex.id}")
+    with TestClient(app, follow_redirects=False) as other_phone:
+        r = other_phone.post(f"{join_path(app, admin)}/claim/{alex.id}")
+    assert r.status_code == 409
+    assert "Already claimed" in r.text
+
+
+def test_double_tap_same_phone_goes_to_personal_page(client, app):
     admin = drawn(client, app)
     alex = people(app, admin)["Alex"]
     client.post(f"{join_path(app, admin)}/claim/{alex.id}")
     r = client.post(f"{join_path(app, admin)}/claim/{alex.id}")
-    assert r.status_code == 409
-    assert "Already claimed" in r.text
+    assert r.status_code == 303
+    assert r.headers["location"] == "/p/" + alex.personal_token
+
+
+def test_bad_id_type_is_friendly_404(client, app):
+    admin = drawn(client, app)
+    r = client.post(f"{join_path(app, admin)}/claim/xyz")
+    assert r.status_code == 404
+    assert r.headers["content-type"].startswith("text/html")
 
 
 def test_claim_is_atomic(client, app):

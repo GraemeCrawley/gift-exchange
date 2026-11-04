@@ -14,6 +14,7 @@ services:
     container_name: gift-exchange
     environment:
       ROOT_PATH: /gift-exchange
+      PUBLIC_BASE_URL: https://apps.graemecrawley.com/gift-exchange
       GIFT_DB_PATH: /data/gift.db
       TZ: America/Toronto
     volumes:

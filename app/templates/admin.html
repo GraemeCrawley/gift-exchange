@@ -86,11 +86,16 @@
 <hr>
 <h2>Draw names</h2>
 {% if ex.draw_state == 'stale' %}
-<p class="alert alert-warn">People changed since the last draw. Everyone gets a new person. Links and wish lists are kept.</p>
+<p class="alert alert-warn">People changed since the last draw. Re-draw so everyone gets a match again.</p>
+{% elif ex.draw_state == 'current' %}
+<p class="fine">Names are drawn. Only re-draw if you need to.</p>
 {% endif %}
 <p>Nobody draws themselves or someone in their household. You won't see who drew whom.</p>
-<form method="post" action="{{ url(base ~ '/draw') }}">
-  <button class="btn btn-primary btn-big">{{ 'Draw names' if ex.draw_state == 'none' else 'Re-draw' }}</button>
+<form method="post" action="{{ url(base ~ '/draw') }}" class="stack-sm" {% if ex.draw_state != 'none' %}data-gate{% endif %}>
+  {% if ex.draw_state != 'none' %}
+  <label class="check"><input type="checkbox" name="confirm" value="on" data-gate-box> Re-draw. Everyone gets a new person. Links and wish lists are kept.</label>
+  {% endif %}
+  <button class="btn btn-primary btn-big" {% if ex.draw_state != 'none' %}data-gate-button{% endif %}>{{ 'Draw names' if ex.draw_state == 'none' else 'Re-draw' }}</button>
 </form>
 
 <hr>

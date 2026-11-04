@@ -58,6 +58,18 @@
     document.querySelectorAll('[data-tip="android"]').forEach(function (el) { el.hidden = !isAndroid; });
   }
 
+  // Back button restores a page with disabled buttons; reload it fresh instead.
+  window.addEventListener("pageshow", function (e) { if (e.persisted) window.location.reload(); });
+
+  // Stop double-taps from sending a form twice.
+  document.querySelectorAll("form").forEach(function (form) {
+    form.addEventListener("submit", function () {
+      setTimeout(function () {
+        form.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+      }, 0);
+    });
+  });
+
   document.querySelectorAll("[data-gate]").forEach(function (form) {
     var box = form.querySelector("[data-gate-box]");
     var button = form.querySelector("[data-gate-button]");
