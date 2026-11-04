@@ -6,7 +6,7 @@ def test_health(client):
 
 def test_security_headers(client):
     r = client.get("/health")
-    assert r.headers["referrer-policy"] == "no-referrer"
+    assert r.headers["referrer-policy"] == "same-origin"
     assert r.headers["x-robots-tag"] == "noindex"
 
 

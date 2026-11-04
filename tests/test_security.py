@@ -80,3 +80,23 @@ def test_delete_expired(app, client):
     assert repo.delete_expired(c, today) == 2
     left = {r[0] for r in c.execute("SELECT name FROM exchange")}
     assert left == {"Recent", "Fresh"}
+
+
+def test_referrer_policy_lets_browsers_send_origin(client):
+    # no-referrer makes browsers send "Origin: null" on form posts, which our check rejects.
+    assert client.get("/").headers["referrer-policy"] == "same-origin"
+
+
+def test_null_origin_same_site_fetch_allowed(client):
+    r = client.post("/create", data={"name": "X"}, headers={"Origin": "null", "Sec-Fetch-Site": "same-origin"})
+    assert r.status_code == 303
+
+
+def test_cross_site_fetch_rejected(client):
+    r = client.post("/create", data={"name": "X"}, headers={"Origin": "null", "Sec-Fetch-Site": "cross-site"})
+    assert r.status_code == 403
+
+
+def test_null_origin_without_fetch_metadata_rejected(client):
+    r = client.post("/create", data={"name": "X"}, headers={"Origin": "null"})
+    assert r.status_code == 403
