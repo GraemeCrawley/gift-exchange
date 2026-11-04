@@ -1,4 +1,4 @@
-// Copy / Share buttons, phone-specific Home Screen tips, and checkbox-gated buttons.
+// Copy / Share buttons, households drag-and-drop, and checkbox-gated buttons.
 // No dependencies. Everything still works (server-side) if this script fails.
 (function () {
   "use strict";
@@ -40,6 +40,8 @@
   if (navigator.share) {
     document.querySelectorAll("[data-share]").forEach(function (button) {
       button.hidden = false;
+      var hint = button.closest(".sharebox").querySelector("[data-share-hint]");
+      if (hint) hint.hidden = false;
       button.addEventListener("click", function () {
         navigator.share({
           title: button.getAttribute("data-share-title") || document.title,
@@ -49,14 +51,6 @@
     });
   }
 
-  var ua = navigator.userAgent || "";
-  var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  var isAndroid = /Android/.test(ua);
-  var standalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
-  if (!standalone) {
-    document.querySelectorAll('[data-tip="ios"]').forEach(function (el) { el.hidden = !isIOS; });
-    document.querySelectorAll('[data-tip="android"]').forEach(function (el) { el.hidden = !isAndroid; });
-  }
 
   // Browsers skip autofocus when the URL has #add, so focus the box ourselves,
   // after the browser has finished jumping to #add (that jump clears focus).

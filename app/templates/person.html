@@ -4,7 +4,7 @@
 {% block content %}
 {% if not p.link_saved %}
 <div class="alert alert-reminder stack-sm">
-  <span>Haven't saved your link yet? Copy it, share it to yourself, or bookmark this page.</span>
+  <span>Haven't saved your link yet?</span>
   {{ sharebox(full_url('/p/' ~ token), "Copy", "reminder", ex.name, tips=True) }}
   <form method="post" action="{{ url('/p/' ~ token ~ '/saved') }}" class="row">
     <input type="hidden" name="saved" value="on">

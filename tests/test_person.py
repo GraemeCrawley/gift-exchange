@@ -140,3 +140,15 @@ def test_date_shown_friendly(client, app):
     client.post(admin + "/settings", data={"name": "Family Christmas", "exchange_date": "2026-12-24", "price_limit": "$50"})
     tok = people(app, admin)["Alex"].personal_token
     assert "Thu, Dec 24, 2026" in saved_page(client, tok)
+
+
+def test_save_step_has_one_simple_instruction(client, app):
+    from tests.helpers import drawn, people
+
+    admin = drawn(client, app)
+    tok = people(app, admin)["Alex"].personal_token
+    page = client.get("/p/" + tok).text
+    assert "Copy this link with the button" in page
+    assert "add it to your Home Screen" in page
+    assert "Do at least one" not in page
+    assert "data-tip=" not in page
