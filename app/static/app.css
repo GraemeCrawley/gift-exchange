@@ -213,3 +213,6 @@ details > :not(summary) { margin: 0 14px 14px; }
   position: fixed; z-index: 50; margin: 0; pointer-events: none;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .3); transform: scale(1.06); cursor: grabbing;
 }
+
+a.name { box-sizing: border-box; color: var(--ink); text-decoration: none; }
+.btn-block + .btn-block, form + .btn-block { margin-top: 10px; }

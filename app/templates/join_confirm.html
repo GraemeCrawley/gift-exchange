@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Are you {{ p.display_name }}?{% endblock %}
+{% block content %}
+<p class="eyebrow">{{ ex.name }}</p>
+<h1>Are you {{ p.display_name }}?</h1>
+<p>Only pick your own name. Once you do, it's yours and nobody else can open it.</p>
+<form method="post" action="{{ url('/j/' ~ join_token ~ '/claim/' ~ p.id) }}" class="stack-sm">
+  <button class="btn btn-primary btn-big">Yes, I'm {{ p.display_name }}</button>
+</form>
+<a class="btn btn-outline-primary btn-big btn-block" href="{{ url('/j/' ~ join_token) }}">No, go back</a>
+{% endblock %}

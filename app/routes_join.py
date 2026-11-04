@@ -5,6 +5,8 @@ from app.web import get_conn, redirect, render, url
 
 router = APIRouter(prefix="/j/{join_token}")
 
+ALREADY_CLAIMED = "Already claimed. If that's your name and you didn't pick it, ask the organizer to reset it."
+
 
 def _load(conn, join_token: str) -> repo.Exchange:
     ex = repo.get_exchange_by_join(conn, join_token)
@@ -27,6 +29,22 @@ def join(request: Request, join_token: str, conn=Depends(get_conn)):
     return _page(request, conn, _load(conn, join_token), join_token)
 
 
+@router.get("/claim/{pid}")
+def confirm(request: Request, join_token: str, pid: int, conn=Depends(get_conn)):
+    """'Are you Alex?' Looking at this page claims nothing; only the Yes button does."""
+    ex = _load(conn, join_token)
+    if ex.draw_state == "none":
+        return _page(request, conn, ex, join_token)
+    p = repo.get_participant(conn, ex.id, pid)
+    if p is None:
+        raise HTTPException(404)
+    if p.claimed:
+        if request.cookies.get(f"gx_claim_{pid}") == p.personal_token:
+            return redirect(request, f"/p/{p.personal_token}")
+        return _page(request, conn, ex, join_token, error=ALREADY_CLAIMED, status=409)
+    return render(request, "join_confirm.html", {"ex": ex, "join_token": join_token, "p": p})
+
+
 @router.post("/claim/{pid}")
 def claim(request: Request, join_token: str, pid: int, conn=Depends(get_conn)):
     ratelimit.check(request, "claim")
@@ -45,7 +63,7 @@ def claim(request: Request, join_token: str, pid: int, conn=Depends(get_conn)):
             return redirect(request, f"/p/{current.personal_token}")
         return _page(
             request, conn, ex, join_token,
-            error="Already claimed. If that's your name and you didn't pick it, ask the organizer to reset it.",
+            error=ALREADY_CLAIMED,
             status=409,
         )
     response = redirect(request, f"/p/{p.personal_token}")

@@ -105,3 +105,33 @@ def test_one_device_many_claims_allowed(client, app):
 def test_bad_join_token_404(client):
     assert client.get("/j/not-real").status_code == 404
     assert client.get("/p/not-real").status_code == 404
+
+
+def test_tapping_a_name_asks_are_you_sure(client, app):
+    admin = drawn(client, app)
+    alex = people(app, admin)["Alex"]
+    confirm = f"{join_path(app, admin)}/claim/{alex.id}"
+    assert f'href="{confirm}"' in client.get(join_path(app, admin)).text
+    page = client.get(confirm)
+    assert page.status_code == 200
+    assert "Are you Alex?" in page.text
+    assert f'action="{confirm}"' in page.text
+    assert f'href="{join_path(app, admin)}"' in page.text  # "No, go back"
+    assert not people(app, admin)["Alex"].claimed  # looking doesn't claim
+
+
+def test_confirm_page_for_claimed_name_says_so(client, app):
+    from fastapi.testclient import TestClient
+
+    admin = drawn(client, app)
+    alex = people(app, admin)["Alex"]
+    client.post(f"{join_path(app, admin)}/claim/{alex.id}")
+    with TestClient(app, follow_redirects=False) as other_phone:
+        r = other_phone.get(f"{join_path(app, admin)}/claim/{alex.id}")
+    assert r.status_code == 409
+    assert "Already claimed" in r.text
+
+
+def test_confirm_page_bad_id_404(client, app):
+    admin = drawn(client, app)
+    assert client.get(f"{join_path(app, admin)}/claim/99999").status_code == 404

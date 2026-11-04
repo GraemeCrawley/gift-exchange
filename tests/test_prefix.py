@@ -45,7 +45,10 @@ def test_prefix_everywhere(pclient):
     join = re.search(r"/j/[A-Za-z0-9_-]+", panel).group(0)
     jpage = pclient.get(join).text
     pages.append(jpage)
-    claim = re.search(r'action="' + PREFIX + r'(/j/[^"]+/claim/\d+)"', jpage).group(1)
+    pick = re.search(r'href="' + PREFIX + r'(/j/[^"]+/claim/\d+)"', jpage).group(1)
+    cpage = pclient.get(pick).text
+    pages.append(cpage)
+    claim = re.search(r'action="' + PREFIX + r'(/j/[^"]+/claim/\d+)"', cpage).group(1)
     person = strip(pclient.post(claim).headers["location"])
     pages.append(pclient.get(person).text)
     strip(pclient.post(person + "/saved", data={"saved": "on"}).headers["location"])

@@ -16,9 +16,7 @@
   {% if p.claimed %}
     <button type="button" class="name name-claimed" disabled><span>{{ p.display_name }}</span><span class="fine">Already claimed</span></button>
   {% else %}
-    <form method="post" action="{{ url('/j/' ~ join_token ~ '/claim/' ~ p.id) }}">
-      <button class="name">{{ p.display_name }}</button>
-    </form>
+    <a class="name" href="{{ url('/j/' ~ join_token ~ '/claim/' ~ p.id) }}">{{ p.display_name }}</a>
   {% endif %}
   </li>
 {% endfor %}
