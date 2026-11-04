@@ -72,26 +72,34 @@
   });
 
   // A small tap on the phone. Android: vibrate. iPhone has no vibrate for websites, but
-  // iOS 18+ gives a haptic tick when an on/off switch is toggled, so flip a hidden one.
-  var hapticLabel = null;
-  function haptic() {
-    if (typeof navigator.vibrate === "function") {
-      try { navigator.vibrate(12); } catch (e) { /* not allowed right now */ }
-      return;
-    }
-    if (!hapticLabel) {
-      hapticLabel = document.createElement("label");
-      hapticLabel.setAttribute("aria-hidden", "true");
-      hapticLabel.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;";
-      var sw = document.createElement("input");
-      sw.type = "checkbox";
-      sw.setAttribute("switch", "");
-      sw.tabIndex = -1;
-      hapticLabel.appendChild(sw);
-      document.body.appendChild(hapticLabel);
-    }
-    hapticLabel.click();
+  // iOS 18+ ticks when an on/off switch is toggled. iPhone only allows that while a finger
+  // is lifting or tapping, so there we hold the tick until the touch ends.
+  var canVibrate = typeof navigator.vibrate === "function";
+  var pendingTick = false;
+  function switchTick() {
+    var label = document.createElement("label");
+    label.setAttribute("aria-hidden", "true");
+    label.style.display = "none";
+    var sw = document.createElement("input");
+    sw.type = "checkbox";
+    sw.setAttribute("switch", "");
+    label.appendChild(sw);
+    document.head.appendChild(label);
+    label.click();
+    document.head.removeChild(label);
   }
+  function haptic(now) {
+    if (canVibrate) {
+      try { navigator.vibrate(12); } catch (e) { /* not allowed right now */ }
+    } else if (now) {
+      try { switchTick(); } catch (e) { /* no haptics here */ }
+    } else {
+      pendingTick = true;
+    }
+  }
+  document.addEventListener("touchend", function () {
+    if (pendingTick) { pendingTick = false; try { switchTick(); } catch (e) { /* no haptics */ } }
+  }, true);
 
   // Households page: drag names between household boxes, or tap a name then tap a box.
   // Each name carries a hidden dropdown; moving a name sets it, and the form posts those.
@@ -187,7 +195,7 @@
       if (!box) return;
       move(selected, box);
       select(selected);
-      haptic();
+      haptic(true);
     });
 
     // Dragging, with pointer events so it works with fingers and mice alike.
@@ -212,6 +220,8 @@
       var ghost = drag.chip.cloneNode(true);
       ghost.classList.add("chip-ghost");
       ghost.classList.remove("selected");
+      var dropdown = ghost.querySelector("select");
+      if (dropdown) dropdown.parentNode.removeChild(dropdown);
       ghost.style.width = rect.width + "px";
       drag.dx = drag.x0 - rect.left;
       drag.dy = drag.y0 - rect.top;
@@ -219,7 +229,7 @@
       drag.ghost = ghost;
       drag.chip.classList.add("placeholder");
       drag.raf = requestAnimationFrame(autoScroll);
-      haptic(); // picked up
+      if (canVibrate) haptic(); // picked up (iPhone can't tick mid-drag)
     }
 
     function endDrag(cancelled) {
