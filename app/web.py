@@ -20,6 +20,19 @@ def nice_date(iso: str | None) -> str:
 templates.env.filters["nice_date"] = nice_date
 
 
+def _static_version() -> str:
+    """Short hash of the CSS and JS, added to their links so phones fetch new copies after a deploy."""
+    import hashlib
+
+    h = hashlib.sha256()
+    for name in ("app.css", "app.js"):
+        h.update((Path(__file__).parent / "static" / name).read_bytes())
+    return h.hexdigest()[:10]
+
+
+templates.env.globals["static_version"] = _static_version()
+
+
 def url(request: Request, path: str) -> str:
     """Absolute path including the app's prefix (e.g. /gift-exchange)."""
     return request.app.state.prefix + path

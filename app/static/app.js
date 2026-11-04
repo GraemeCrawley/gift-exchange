@@ -58,6 +58,13 @@
     document.querySelectorAll('[data-tip="android"]').forEach(function (el) { el.hidden = !isAndroid; });
   }
 
+  // Browsers skip autofocus when the URL has #add, so focus the box ourselves,
+  // after the browser has finished jumping to #add (that jump clears focus).
+  var auto = document.querySelector("[autofocus]");
+  if (auto) window.addEventListener("load", function () {
+    setTimeout(function () { auto.focus({ preventScroll: true }); }, 50);
+  });
+
   // Back button restores a page with disabled buttons; reload it fresh instead.
   window.addEventListener("pageshow", function (e) { if (e.persisted) window.location.reload(); });
 

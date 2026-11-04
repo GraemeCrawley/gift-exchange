@@ -191,3 +191,33 @@ def test_participant_cap(client, app):
         repo.add_participant(c, ex.id, f"Person {i}")
     r = client.post(admin + "/people", data={"name": "One more"})
     assert r.status_code == 400
+
+
+def test_add_returns_to_add_box_with_focus(client):
+    admin = create(client)
+    r = client.post(admin + "/people", data={"name": "Alex"})
+    assert r.headers["location"].endswith("?msg=added#add")
+    page = client.get(r.headers["location"].split("#")[0]).text
+    add_box = page[page.index('id="add"'):]
+    assert "Added." in add_box
+    assert 'id="newname" name="name" maxlength="40" placeholder="Add a name" required autofocus' in page
+
+
+def test_add_error_shown_at_add_box(client):
+    admin = create(client)
+    client.post(admin + "/people", data={"name": "Alex"})
+    page = client.post(admin + "/people", data={"name": "alex"}).text
+    add_box = page[page.index('id="add"'):]
+    assert 'role="alert"' in add_box
+    assert "autofocus" in page
+
+
+def test_person_change_returns_to_people_list(client, app):
+    admin = create(client)
+    add_people(client, admin, ["Alex", "Jordan", "Morgan"])
+    pid = people(app, admin)["Alex"].id
+    r = client.post(f"{admin}/people/{pid}/rename", data={"name": "Alexa"})
+    assert r.headers["location"].endswith("?msg=renamed#people")
+    page = client.get(r.headers["location"].split("#")[0]).text
+    assert "Renamed." in page[page.index('id="people"'):]
+    assert "autofocus" not in page

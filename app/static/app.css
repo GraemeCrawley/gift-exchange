@@ -75,6 +75,13 @@ input[type=text], input:not([type]), input[type=date], input[type=url] {
   background: var(--surface); color: var(--ink);
   font: inherit; font-size: 16px; /* 16px stops iOS zooming in */
 }
+/* iPhone draws date boxes its own way: an empty one shrinks and spills sideways. */
+input[type=date] {
+  -webkit-appearance: none; appearance: none;
+  display: block; min-width: 0; max-width: 100%; box-sizing: border-box;
+  height: 48px; line-height: 46px;
+}
+input[type=date]::-webkit-date-and-time-value { text-align: left; min-height: 1.2em; }
 input:focus-visible, button:focus-visible, summary:focus-visible, a:focus-visible {
   outline: 3px solid var(--primary); outline-offset: 2px;
 }

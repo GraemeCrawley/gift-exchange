@@ -3,14 +3,17 @@
 {% block title %}{{ ex.name }} · organizer{% endblock %}
 {% block content %}
 {% set base = '/a/' ~ token %}
+{% macro flash() %}
+{% if message %}<p class="notice" role="status">{{ message }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{% endmacro %}
 <div class="alert alert-danger stack">
   <strong>This is your organizer link. Don't lose it.</strong>
   <span>There's no account or password. Bookmark it and save it somewhere safe. Never post it in the group chat.</span>
   {{ sharebox(full_url(base), "Copy link", "danger", ex.name ~ " (organizer)") }}
 </div>
 
-{% if message %}<p class="notice" role="status">{{ message }}</p>{% endif %}
-{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+{% if not spot %}{{ flash() }}{% endif %}
 
 <h1>{{ ex.name }}</h1>
 
@@ -33,7 +36,8 @@
   </form>
 </details>
 
-<h2>People ({{ people|length }})</h2>
+<h2 id="people">People ({{ people|length }})</h2>
+{% if spot == 'people' %}{{ flash() }}{% endif %}
 <p class="fine">Same household = won't draw each other. Tap a person for more.</p>
 <ul class="people">
 {% for p in people %}
@@ -76,11 +80,14 @@
 {% for h in people|map(attribute='household')|select|unique %}<option value="{{ h }}">{% endfor %}
 </datalist>
 
+<div id="add" class="stack-sm">
+{% if spot == 'add' %}{{ flash() }}{% endif %}
 <form method="post" action="{{ url(base ~ '/people') }}" class="row">
   <label for="newname" class="sr-only">Add a name</label>
-  <input id="newname" name="name" maxlength="40" placeholder="Add a name" required>
+  <input id="newname" name="name" maxlength="40" placeholder="Add a name" required{% if spot == 'add' %} autofocus{% endif %}>
   <button class="btn btn-outline-primary">Add</button>
 </form>
+</div>
 <p class="fine">Taking part yourself? Add your own name too.</p>
 
 <hr>

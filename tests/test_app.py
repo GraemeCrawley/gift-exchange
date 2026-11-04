@@ -33,3 +33,13 @@ def test_public_base_url_used_for_copied_links(tmp_path, monkeypatch):
         page = c.get(admin).text
     assert "https://apps.example.com/gift-exchange/a/" in page
     assert "http://testserver" not in page
+
+
+def test_static_links_carry_version_so_phones_refetch(client):
+    import re
+
+    page = client.get("/").text
+    css = re.search(r'href="(/static/app\.css\?v=\w+)"', page)
+    js = re.search(r'src="(/static/app\.js\?v=\w+)"', page)
+    assert css and js
+    assert client.get(css.group(1)).status_code == 200

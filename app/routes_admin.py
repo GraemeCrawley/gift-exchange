@@ -16,6 +16,9 @@ MESSAGES = {
     "drawn": "Names drawn! Now share the group link.",
 }
 
+# Where on the page each action lands, so a phone doesn't jump back to the top.
+SPOTS = {"added": "add", "renamed": "people", "household": "people", "removed": "people", "reset": "people"}
+
 
 def _load(conn, token: str) -> repo.Exchange:
     ex = repo.get_exchange_by_admin(conn, token)
@@ -24,8 +27,11 @@ def _load(conn, token: str) -> repo.Exchange:
     return ex
 
 
-def _panel(request: Request, conn, token: str, ex: repo.Exchange, error: str | None = None, status: int = 200):
-    msg = MESSAGES.get(request.query_params.get("msg", ""))
+def _panel(request: Request, conn, token: str, ex: repo.Exchange, error: str | None = None, status: int = 200, spot: str | None = None):
+    key = request.query_params.get("msg", "")
+    msg = MESSAGES.get(key)
+    if spot is None and not error:
+        spot = SPOTS.get(key)
     return render(
         request,
         "admin.html",
@@ -35,6 +41,7 @@ def _panel(request: Request, conn, token: str, ex: repo.Exchange, error: str | N
             "people": repo.list_participants(conn, ex.id),
             "message": None if error else msg,
             "error": error,
+            "spot": spot,
             "manifest_url": url(request, f"/a/{token}/manifest.webmanifest"),
         },
         status=status,
@@ -64,10 +71,11 @@ def _act(request, conn, token, action, msg_key):
     try:
         action(ex)
     except repo.ValidationError as e:
-        return _panel(request, conn, token, repo.get_exchange(conn, ex.id), error=str(e), status=400)
+        return _panel(request, conn, token, repo.get_exchange(conn, ex.id), error=str(e), status=400, spot=SPOTS.get(msg_key))
     except LookupError:
         raise HTTPException(404) from None
-    return redirect(request, f"/a/{token}?msg={msg_key}")
+    spot = SPOTS.get(msg_key)
+    return redirect(request, f"/a/{token}?msg={msg_key}" + (f"#{spot}" if spot else ""))
 
 
 @router.post("/settings")
