@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app import db, routes_admin, routes_home, web
+from app import db, routes_admin, routes_home, routes_join, routes_person, web
 from app.config import load_settings
 from app.security import RedactTokensFilter, security_headers
 
@@ -41,6 +41,8 @@ def create_app(db_path: str | None = None, root_path: str | None = None) -> Fast
 
     app.include_router(routes_home.router)
     app.include_router(routes_admin.router)
+    app.include_router(routes_join.router)
+    app.include_router(routes_person.router)
 
     Instrumentator().instrument(app).expose(app, include_in_schema=False)
     return app

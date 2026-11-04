@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_sharebox.html" import sharebox %}
+{% block title %}Save your link{% endblock %}
+{% block content %}
+<p class="eyebrow">{{ ex.name }}</p>
+<h1>Hi {{ p.display_name }}. Save your personal link now.</h1>
+<p>This link is the only way back to your page. It shows who you're buying for, so don't share it.</p>
+{{ sharebox(full_url('/p/' ~ token), "Copy link", "primary", ex.name, tips=True) }}
+<p><strong>Do at least one:</strong></p>
+<ul class="plain">
+  <li>Bookmark this page</li>
+  <li>Paste the link into a note or text it to yourself</li>
+  <li>Add it to your Home Screen</li>
+</ul>
+<form method="post" action="{{ url('/p/' ~ token ~ '/saved') }}" class="stack" data-gate>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <label class="check"><input type="checkbox" name="saved" value="on" data-gate-box> I've saved my link</label>
+  <button class="btn btn-primary btn-big" data-gate-button>Continue to my page</button>
+</form>
+<p class="center"><a href="{{ url('/p/' ~ token) }}?later=1">Remind me later</a></p>
+{% endblock %}

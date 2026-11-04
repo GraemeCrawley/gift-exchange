@@ -247,3 +247,25 @@ def run_draw(conn, ex_id: int) -> None:
 
 def mark_admin_link_saved(conn, ex_id: int) -> None:
     conn.execute("UPDATE exchange SET admin_link_saved_at=? WHERE id=?", (now(), ex_id))
+
+
+def claim(conn, ex_id: int, pid: int) -> Participant | None:
+    """Claim a name. Returns None if it was already claimed (or doesn't exist)."""
+    cur = conn.execute(
+        "UPDATE participant SET claimed_at=? WHERE id=? AND exchange_id=? AND claimed_at IS NULL",
+        (now(), pid, ex_id),
+    )
+    if cur.rowcount == 0:
+        return None
+    return get_participant(conn, ex_id, pid)
+
+
+def claim_by_token(conn, participant: Participant) -> None:
+    """Opening your personal link for the first time counts as claiming your name."""
+    if not participant.claimed:
+        claim(conn, participant.exchange_id, participant.id)
+        participant.claimed = True
+
+
+def mark_link_saved(conn, pid: int) -> None:
+    conn.execute("UPDATE participant SET link_saved_at=? WHERE id=?", (now(), pid))
