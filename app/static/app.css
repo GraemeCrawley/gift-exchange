@@ -143,7 +143,8 @@ details > summary {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px; list-style: none;
 }
 details > summary::-webkit-details-marker { display: none; }
-details > summary::after { content: "›"; margin-left: auto; color: var(--muted); font-size: 22px; transition: transform .15s; }
+.summary-text { flex: 1 1 0; min-width: 0; } /* long text wraps beside the arrow, not above it */
+details > summary::after { content: "›"; flex: none; margin-left: auto; color: var(--muted); font-size: 22px; transition: transform .15s; }
 details[open] > summary::after { transform: rotate(90deg); }
 details > :not(summary) { margin: 0 14px 14px; }
 .person-name { font-size: 17px; font-weight: 600; }
