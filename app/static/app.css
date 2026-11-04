@@ -100,7 +100,7 @@ label.check input { width: 22px; height: 22px; flex: none; accent-color: var(--p
 .btn-big { min-height: 54px; font-size: 17px; width: 100%; }
 .btn-primary { background: var(--primary); color: #fff; }
 .btn-danger { background: var(--danger); color: #fff; }
-.btn-reminder { background: #fff; color: var(--warn-ink); border-color: var(--warn-line); }
+.btn-reminder { background: var(--warn-ink); color: var(--warn-bg); border-color: var(--warn-ink); }
 .btn-outline-primary { background: var(--surface); color: var(--primary); border-color: var(--primary); }
 .btn-outline-danger { background: var(--surface); color: var(--danger); border-color: var(--danger); }
 .btn-outline-reminder { background: transparent; color: var(--warn-ink); border-color: var(--warn-line); }
@@ -216,3 +216,11 @@ details > :not(summary) { margin: 0 14px 14px; }
 
 a.name { box-sizing: border-box; color: var(--ink); text-decoration: none; }
 .btn-block + .btn-block, form + .btn-block { margin-top: 10px; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.fact {
+  display: flex; flex-direction: column; gap: 2px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+}
+.fact-big { font-family: var(--serif); font-size: 22px; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+.fact-small { font-size: 14px; color: var(--muted); }

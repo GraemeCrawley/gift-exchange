@@ -1,8 +1,18 @@
 <p class="eyebrow">Gift exchange</p>
 <h1>{{ ex.name }}</h1>
 {% if ex.exchange_date or ex.price_limit %}
-<p class="meta">
-  {% if ex.exchange_date %}<span>Exchange: {{ ex.exchange_date|nice_date }}</span>{% endif %}
-  {% if ex.price_limit %}<span>Limit: {{ ex.price_limit }}</span>{% endif %}
-</p>
+<div class="facts">
+  {% if ex.exchange_date %}
+  <div class="fact">
+    <span class="fact-big">{{ ex.exchange_date|countdown or ex.exchange_date|nice_date }}</span>
+    <span class="fact-small">{% if ex.exchange_date|countdown %}{{ ex.exchange_date|nice_date }}{% else %}Exchange day{% endif %}</span>
+  </div>
+  {% endif %}
+  {% if ex.price_limit %}
+  <div class="fact">
+    <span class="fact-big">{{ ex.price_limit }}</span>
+    <span class="fact-small">Gift limit</span>
+  </div>
+  {% endif %}
+</div>
 {% endif %}

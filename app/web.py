@@ -20,6 +20,21 @@ def nice_date(iso: str | None) -> str:
 templates.env.filters["nice_date"] = nice_date
 
 
+def countdown(iso: str | None, today=None) -> str:
+    """'54 days to go', 'Tomorrow!', 'Today!', or '' once it's past. Uses the server's local date (TZ)."""
+    from datetime import date
+
+    if not iso:
+        return ""
+    days = (date.fromisoformat(iso) - (today or date.today())).days
+    if days < 0:
+        return ""
+    return {0: "Today!", 1: "Tomorrow!"}.get(days, f"{days} days to go")
+
+
+templates.env.filters["countdown"] = countdown
+
+
 def _static_version() -> str:
     """Short hash of the CSS and JS, added to their links so phones fetch new copies after a deploy."""
     import hashlib

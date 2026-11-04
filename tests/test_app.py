@@ -43,3 +43,29 @@ def test_static_links_carry_version_so_phones_refetch(client):
     js = re.search(r'src="(/static/app\.js\?v=\w+)"', page)
     assert css and js
     assert client.get(css.group(1)).status_code == 200
+
+
+def test_countdown_wording():
+    from datetime import date
+
+    from app.web import countdown
+
+    today = date(2026, 11, 4)
+    assert countdown("2026-12-28", today) == "54 days to go"
+    assert countdown("2026-11-05", today) == "Tomorrow!"
+    assert countdown("2026-11-04", today) == "Today!"
+    assert countdown("2026-11-01", today) == ""
+    assert countdown(None, today) == ""
+
+
+def test_header_shows_countdown_and_limit(client, app):
+    from datetime import date, timedelta
+
+    from tests.helpers import drawn, people
+
+    admin = drawn(client, app)
+    soon = (date.today() + timedelta(days=10)).isoformat()
+    client.post(admin + "/settings", data={"name": "X", "exchange_date": soon, "price_limit": "$50"})
+    page = client.get("/p/" + people(app, admin)["Alex"].personal_token + "?later=1").text
+    assert "10 days to go" in page
+    assert "Gift limit" in page and "$50" in page
