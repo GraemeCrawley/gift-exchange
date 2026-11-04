@@ -7,6 +7,19 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
+def nice_date(iso: str | None) -> str:
+    """2026-12-24 -> Thu, Dec 24, 2026"""
+    from datetime import date
+
+    if not iso:
+        return ""
+    d = date.fromisoformat(iso)
+    return f"{d:%a, %b} {d.day}, {d.year}"
+
+
+templates.env.filters["nice_date"] = nice_date
+
+
 def url(request: Request, path: str) -> str:
     """Absolute path including the app's prefix (e.g. /gift-exchange)."""
     return request.app.state.prefix + path

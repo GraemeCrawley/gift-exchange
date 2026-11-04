@@ -2,7 +2,7 @@
 <h1>{{ ex.name }}</h1>
 {% if ex.exchange_date or ex.price_limit %}
 <p class="meta">
-  {% if ex.exchange_date %}<span>Exchange: {{ ex.exchange_date }}</span>{% endif %}
+  {% if ex.exchange_date %}<span>Exchange: {{ ex.exchange_date|nice_date }}</span>{% endif %}
   {% if ex.price_limit %}<span>Limit: {{ ex.price_limit }}</span>{% endif %}
 </p>
 {% endif %}

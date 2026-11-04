@@ -133,3 +133,10 @@ def test_reminder_bar_until_saved(client, app):
     assert "saved your link yet?" in page
     page = saved_page(client, tok)
     assert "saved your link yet?" not in page
+
+
+def test_date_shown_friendly(client, app):
+    admin = drawn(client, app)
+    client.post(admin + "/settings", data={"name": "Family Christmas", "exchange_date": "2026-12-24", "price_limit": "$50"})
+    tok = people(app, admin)["Alex"].personal_token
+    assert "Thu, Dec 24, 2026" in saved_page(client, tok)

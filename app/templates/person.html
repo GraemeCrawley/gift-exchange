@@ -49,8 +49,10 @@
   <li class="item">
     <details>
       <summary>
-        <span>{{ it.text }}</span>
-        {% if it.url %}<span class="fine link-preview">{{ it.url }}</span>{% endif %}
+        <span class="item-text">
+          <span>{{ it.text }}</span>
+          {% if it.url %}<span class="fine link-preview">{{ it.url }}</span>{% endif %}
+        </span>
       </summary>
       <form method="post" action="{{ url('/p/' ~ token ~ '/items/' ~ it.id ~ '/edit') }}" class="stack-sm">
         <label for="t-{{ it.id }}">Wish</label>
