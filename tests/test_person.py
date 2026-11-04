@@ -149,6 +149,8 @@ def test_save_step_has_one_simple_instruction(client, app):
     tok = people(app, admin)["Alex"].personal_token
     page = client.get("/p/" + tok).text
     assert "Copy this link with the button" in page
-    assert "add it to your Home Screen" in page
+    assert "your browser's own Share button" in page
+    assert "Add to Home Screen" in page
+    assert "data-share-hint" not in page  # our Share… sheet has no Add to Home Screen
     assert "Do at least one" not in page
     assert "data-tip=" not in page

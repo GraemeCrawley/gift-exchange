@@ -40,8 +40,6 @@
   if (navigator.share) {
     document.querySelectorAll("[data-share]").forEach(function (button) {
       button.hidden = false;
-      var hint = button.closest(".sharebox").querySelector("[data-share-hint]");
-      if (hint) hint.hidden = false;
       button.addEventListener("click", function () {
         navigator.share({
           title: button.getAttribute("data-share-title") || document.title,
