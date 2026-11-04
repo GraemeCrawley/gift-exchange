@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app import web
+from app import db, routes_admin, routes_home, web
 from app.config import load_settings
 from app.security import RedactTokensFilter, security_headers
 
@@ -20,6 +20,9 @@ def create_app(db_path: str | None = None, root_path: str | None = None) -> Fast
         openapi_url=None,
     )
     app.state.db_path = db_path or settings.db_path
+    conn = db.connect(app.state.db_path)
+    db.init_schema(conn)
+    conn.close()
 
     app.middleware("http")(security_headers)
     logging.getLogger("uvicorn.access").addFilter(RedactTokensFilter())
@@ -35,6 +38,9 @@ def create_app(db_path: str | None = None, root_path: str | None = None) -> Fast
     @app.get("/health")
     def health():
         return {"status": "ok"}
+
+    app.include_router(routes_home.router)
+    app.include_router(routes_admin.router)
 
     Instrumentator().instrument(app).expose(app, include_in_schema=False)
     return app

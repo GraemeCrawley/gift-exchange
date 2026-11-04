@@ -134,3 +134,116 @@ def list_participants(conn, exchange_id: int) -> list[Participant]:
         "SELECT * FROM participant WHERE exchange_id=? ORDER BY display_name COLLATE NOCASE", (exchange_id,)
     )
     return [_participant(r) for r in rows]
+
+
+MAX_PARTICIPANTS = 100
+
+
+def _mark_stale(conn, ex_id: int) -> None:
+    conn.execute("UPDATE exchange SET draw_state='stale' WHERE id=? AND draw_state='current'", (ex_id,))
+
+
+def _clean_date(value: str | None) -> str | None:
+    value = (value or "").strip()
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        raise ValidationError("Exchange date must be a valid date.") from None
+
+
+def update_settings(conn, ex_id: int, name: str, exchange_date: str | None, price_limit: str | None) -> None:
+    name = _clean_text(name, "Exchange name", 80)
+    date = _clean_date(exchange_date)
+    limit = _clean_text(price_limit, "Price limit", 20, required=False)
+    conn.execute(
+        "UPDATE exchange SET name=?, exchange_date=?, price_limit=? WHERE id=?", (name, date, limit, ex_id)
+    )
+
+
+def add_participant(conn, ex_id: int, name: str) -> Participant:
+    name = _clean_text(name, "Name", 40)
+    with transaction(conn):
+        count = conn.execute("SELECT count(*) FROM participant WHERE exchange_id=?", (ex_id,)).fetchone()[0]
+        if count >= MAX_PARTICIPANTS:
+            raise ValidationError(f"An exchange can have at most {MAX_PARTICIPANTS} people.")
+        try:
+            cur = conn.execute(
+                "INSERT INTO participant(exchange_id, display_name, personal_token, created_at) VALUES (?,?,?,?)",
+                (ex_id, name, new_token(), now()),
+            )
+        except sqlite3.IntegrityError:
+            raise ValidationError(f"{name} is already in this exchange.") from None
+        _mark_stale(conn, ex_id)
+    return get_participant(conn, ex_id, cur.lastrowid)
+
+
+def _require_participant(conn, ex_id: int, pid: int) -> Participant:
+    p = get_participant(conn, ex_id, pid)
+    if p is None:
+        raise LookupError(pid)
+    return p
+
+
+def rename_participant(conn, ex_id: int, pid: int, name: str) -> None:
+    _require_participant(conn, ex_id, pid)
+    name = _clean_text(name, "Name", 40)
+    try:
+        conn.execute("UPDATE participant SET display_name=? WHERE id=?", (name, pid))
+    except sqlite3.IntegrityError:
+        raise ValidationError(f"{name} is already in this exchange.") from None
+
+
+def set_household(conn, ex_id: int, pid: int, household: str | None) -> None:
+    p = _require_participant(conn, ex_id, pid)
+    household = _clean_text(household, "Household", 30, required=False)
+    if household:
+        # Reuse an existing household's spelling so "a" and "A" are the same household.
+        row = conn.execute(
+            "SELECT household FROM participant WHERE exchange_id=? AND household=? COLLATE NOCASE LIMIT 1",
+            (ex_id, household),
+        ).fetchone()
+        if row:
+            household = row["household"]
+    if household == p.household:
+        return
+    with transaction(conn):
+        conn.execute("UPDATE participant SET household=? WHERE id=?", (household, pid))
+        _mark_stale(conn, ex_id)
+
+
+def remove_participant(conn, ex_id: int, pid: int) -> None:
+    _require_participant(conn, ex_id, pid)
+    with transaction(conn):
+        conn.execute("DELETE FROM participant WHERE id=?", (pid,))  # cascades to assignments + wish items
+        _mark_stale(conn, ex_id)
+
+
+def reset_claim(conn, ex_id: int, pid: int) -> Participant:
+    _require_participant(conn, ex_id, pid)
+    conn.execute(
+        "UPDATE participant SET personal_token=?, claimed_at=NULL, link_saved_at=NULL WHERE id=?",
+        (new_token(), pid),
+    )
+    return get_participant(conn, ex_id, pid)
+
+
+def run_draw(conn, ex_id: int) -> None:
+    from app.draw import DrawImpossible, make_draw
+
+    with transaction(conn):
+        people = list_participants(conn, ex_id)
+        try:
+            result = make_draw([(p.id, p.household) for p in people])
+        except DrawImpossible as e:
+            raise ValidationError(e.message) from None
+        conn.execute(
+            "DELETE FROM assignment WHERE giver_id IN (SELECT id FROM participant WHERE exchange_id=?)", (ex_id,)
+        )
+        conn.executemany("INSERT INTO assignment(giver_id, receiver_id) VALUES (?,?)", result.items())
+        conn.execute("UPDATE exchange SET draw_state='current' WHERE id=?", (ex_id,))
+
+
+def mark_admin_link_saved(conn, ex_id: int) -> None:
+    conn.execute("UPDATE exchange SET admin_link_saved_at=? WHERE id=?", (now(), ex_id))

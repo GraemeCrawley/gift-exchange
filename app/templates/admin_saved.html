@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_sharebox.html" import sharebox %}
+{% block title %}Save your organizer link{% endblock %}
+{% block content %}
+<p class="eyebrow">{{ ex.name }}</p>
+<div class="alert alert-danger stack">
+  <h1>This is your organizer link. Don't lose it.</h1>
+  <p>There's no account or password. Without this link you can't manage the exchange. Never post it in the group chat.</p>
+  {{ sharebox(full_url('/a/' ~ token), "Copy link", "danger", ex.name ~ " (organizer)", tips=True) }}
+</div>
+<p><strong>Do at least one:</strong></p>
+<ul class="plain">
+  <li>Bookmark this page</li>
+  <li>Paste the link into a note or text it to yourself</li>
+  <li>Add it to your Home Screen</li>
+</ul>
+<form method="post" action="{{ url('/a/' ~ token ~ '/saved') }}" class="stack" data-gate>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <label class="check"><input type="checkbox" name="saved" value="on" data-gate-box> I've saved my organizer link</label>
+  <button class="btn btn-primary btn-big" data-gate-button>Continue</button>
+</form>
+{% endblock %}

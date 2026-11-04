@@ -27,3 +27,20 @@ def render(request: Request, name: str, ctx: dict | None = None, status: int = 2
 
 def not_found(request: Request):
     return render(request, "not_found.html", {}, status=404)
+
+
+def get_conn(request: Request):
+    """FastAPI dependency: one SQLite connection per request."""
+    from app import db
+
+    conn = db.connect(request.app.state.db_path)
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+def redirect(request: Request, path: str):
+    from fastapi.responses import RedirectResponse
+
+    return RedirectResponse(url(request, path), status_code=303)

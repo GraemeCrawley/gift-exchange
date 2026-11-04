@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% from "_sharebox.html" import sharebox %}
+{% block title %}{{ ex.name }} · organizer{% endblock %}
+{% block content %}
+{% set base = '/a/' ~ token %}
+<div class="alert alert-danger stack">
+  <strong>This is your organizer link. Don't lose it.</strong>
+  <span>There's no account or password. Bookmark it and save it somewhere safe. Never post it in the group chat.</span>
+  {{ sharebox(full_url(base), "Copy link", "danger", ex.name ~ " (organizer)") }}
+</div>
+
+{% if message %}<p class="notice" role="status">{{ message }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+<h1>{{ ex.name }}</h1>
+
+<details class="card">
+  <summary>Exchange details{% if ex.exchange_date or ex.price_limit %}: {{ ex.exchange_date or '' }}{% if ex.exchange_date and ex.price_limit %} · {% endif %}{% if ex.price_limit %}limit {{ ex.price_limit }}{% endif %}{% endif %}</summary>
+  <form method="post" action="{{ url(base ~ '/settings') }}" class="stack">
+    <label for="ex-name">Exchange name</label>
+    <input id="ex-name" name="name" maxlength="80" required value="{{ ex.name }}">
+    <div class="grid2">
+      <div class="stack-sm">
+        <label for="ex-date">Exchange date</label>
+        <input id="ex-date" name="exchange_date" type="date" value="{{ ex.exchange_date or '' }}">
+      </div>
+      <div class="stack-sm">
+        <label for="ex-limit">Price limit</label>
+        <input id="ex-limit" name="price_limit" maxlength="20" placeholder="$50" value="{{ ex.price_limit or '' }}">
+      </div>
+    </div>
+    <button class="btn btn-outline-primary">Save details</button>
+  </form>
+</details>
+
+<h2>People ({{ people|length }})</h2>
+<p class="fine">Same household = won't draw each other. Tap a person for more.</p>
+<ul class="people">
+{% for p in people %}
+  <li>
+    <details class="person">
+      <summary>
+        <span class="person-name">{{ p.display_name }}</span>
+        {% if p.household %}<span class="tag">{{ p.household }}</span>{% endif %}
+        <span class="status {{ 'joined' if p.claimed else '' }}">{{ 'Joined' if p.claimed else 'Not yet' }}</span>
+      </summary>
+      <div class="stack person-body">
+        <p class="fine">{{ p.display_name }}'s personal link. Send it if they lost theirs.</p>
+        {{ sharebox(full_url('/p/' ~ p.personal_token), "Copy link", "primary", ex.name) }}
+        <form method="post" action="{{ url(base ~ '/people/' ~ p.id ~ '/rename') }}" class="row">
+          <label for="rn-{{ p.id }}" class="sr-only">Rename {{ p.display_name }}</label>
+          <input id="rn-{{ p.id }}" name="name" maxlength="40" value="{{ p.display_name }}">
+          <button class="btn btn-outline-primary">Rename</button>
+        </form>
+        <form method="post" action="{{ url(base ~ '/people/' ~ p.id ~ '/household') }}" class="row">
+          <label for="hh-{{ p.id }}" class="sr-only">Household for {{ p.display_name }}</label>
+          <input id="hh-{{ p.id }}" name="household" maxlength="30" placeholder="Household (optional)" value="{{ p.household or '' }}" list="households">
+          <button class="btn btn-outline-primary">Set</button>
+        </form>
+        {% if p.claimed %}
+        <form method="post" action="{{ url(base ~ '/people/' ~ p.id ~ '/reset') }}" class="stack-sm">
+          <p class="fine">Someone else claimed this name by mistake? Reset it. {{ p.display_name }} gets a new link and the old one stops working.</p>
+          <button class="btn btn-outline-primary">Reset claim</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url(base ~ '/people/' ~ p.id ~ '/remove') }}" class="stack-sm">
+          <label class="check"><input type="checkbox" name="confirm" value="on"> Yes, remove {{ p.display_name }} and their wish list</label>
+          <button class="btn btn-outline-danger">Remove</button>
+        </form>
+      </div>
+    </details>
+  </li>
+{% endfor %}
+</ul>
+<datalist id="households">
+{% for h in people|map(attribute='household')|select|unique %}<option value="{{ h }}">{% endfor %}
+</datalist>
+
+<form method="post" action="{{ url(base ~ '/people') }}" class="row">
+  <label for="newname" class="sr-only">Add a name</label>
+  <input id="newname" name="name" maxlength="40" placeholder="Add a name" required>
+  <button class="btn btn-outline-primary">Add</button>
+</form>
+<p class="fine">Taking part yourself? Add your own name too.</p>
+
+<hr>
+<h2>Draw names</h2>
+{% if ex.draw_state == 'stale' %}
+<p class="alert alert-warn">People changed since the last draw. Everyone gets a new person. Links and wish lists are kept.</p>
+{% endif %}
+<p>Nobody draws themselves or someone in their household. You won't see who drew whom.</p>
+<form method="post" action="{{ url(base ~ '/draw') }}">
+  <button class="btn btn-primary btn-big">{{ 'Draw names' if ex.draw_state == 'none' else 'Re-draw' }}</button>
+</form>
+
+<hr>
+<h2>Invite everyone</h2>
+{% if ex.draw_state == 'none' %}
+<p class="fine">Draw names first. Then the group link appears here.</p>
+{% else %}
+<p>Post this one link in the family group chat. Each person taps their own name.</p>
+{{ sharebox(full_url('/j/' ~ ex.join_token), "Copy group link", "primary", ex.name) }}
+{% endif %}
+{% endblock %}

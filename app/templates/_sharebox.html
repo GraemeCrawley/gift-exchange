@@ -1,0 +1,15 @@
+{# A link with Copy + Share… buttons and phone-specific Home Screen tips.
+   Share… stays hidden until app.js confirms the phone supports it. #}
+{% macro sharebox(link, copy_label="Copy link", kind="primary", title="Gift exchange", tips=False) %}
+<div class="sharebox sharebox-{{ kind }}">
+  <code class="link">{{ link }}</code>
+  <div class="sharebox-buttons">
+    <button type="button" class="btn btn-{{ kind }}" data-copy="{{ link }}">{{ copy_label }}</button>
+    <button type="button" class="btn btn-outline-{{ kind }}" data-share="{{ link }}" data-share-title="{{ title }}" hidden>Share…</button>
+  </div>
+  {% if tips %}
+  <p class="tip" data-tip="ios" hidden>iPhone: tap Safari's Share icon, then <strong>Add to Home Screen</strong>.</p>
+  <p class="tip" data-tip="android" hidden>Android: tap <strong>⋮</strong> in Chrome, then <strong>Add to Home screen</strong>.</p>
+  {% endif %}
+</div>
+{% endmacro %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="eyebrow">Gift exchange</p>
+<h1>Draw names for a Secret Santa</h1>
+<p>No accounts, no passwords, no email. You get a private organizer link; everyone else gets one group link to pick their name.</p>
+
+<form method="post" action="{{ url('/create') }}" class="card stack">
+  <label for="name">What's your exchange called?</label>
+  <input id="name" name="name" maxlength="80" required placeholder="Family Christmas 2026" value="{{ name or '' }}">
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <button class="btn btn-primary btn-big">Create gift exchange</button>
+</form>
+
+<h2>How it works</h2>
+<ol class="steps">
+  <li>Add everyone's names. Put couples or people who live together in a household so they don't draw each other.</li>
+  <li>Press <strong>Draw names</strong>.</li>
+  <li>Post the group link in your family chat. Each person taps their own name, saves their personal link, and adds a wish list.</li>
+</ol>
+<p class="fine">Exchanges are deleted automatically 60 days after the exchange date (or one year after they're created if no date is set).</p>
+{% endblock %}
