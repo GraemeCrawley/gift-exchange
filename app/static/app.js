@@ -71,6 +71,28 @@
     });
   });
 
+  // A small tap on the phone. Android: vibrate. iPhone has no vibrate for websites, but
+  // iOS 18+ gives a haptic tick when an on/off switch is toggled, so flip a hidden one.
+  var hapticLabel = null;
+  function haptic() {
+    if (typeof navigator.vibrate === "function") {
+      try { navigator.vibrate(12); } catch (e) { /* not allowed right now */ }
+      return;
+    }
+    if (!hapticLabel) {
+      hapticLabel = document.createElement("label");
+      hapticLabel.setAttribute("aria-hidden", "true");
+      hapticLabel.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;";
+      var sw = document.createElement("input");
+      sw.type = "checkbox";
+      sw.setAttribute("switch", "");
+      sw.tabIndex = -1;
+      hapticLabel.appendChild(sw);
+      document.body.appendChild(hapticLabel);
+    }
+    hapticLabel.click();
+  }
+
   // Households page: drag names between household boxes, or tap a name then tap a box.
   // Each name carries a hidden dropdown; moving a name sets it, and the form posts those.
   function households(form) {
@@ -165,6 +187,7 @@
       if (!box) return;
       move(selected, box);
       select(selected);
+      haptic();
     });
 
     // Dragging, with pointer events so it works with fingers and mice alike.
@@ -196,6 +219,7 @@
       drag.ghost = ghost;
       drag.chip.classList.add("placeholder");
       drag.raf = requestAnimationFrame(autoScroll);
+      haptic(); // picked up
     }
 
     function endDrag(cancelled) {
@@ -206,10 +230,11 @@
         drag.ghost.parentNode.removeChild(drag.ghost);
         drag.chip.classList.remove("placeholder");
         var box = cancelled ? null : boxAt(drag.x, drag.y);
-        if (box) move(drag.chip, box);
+        if (box) { move(drag.chip, box); haptic(); } // dropped
         if (selected) select(selected);
       } else if (!cancelled) {
         select(drag.chip); // a tap, not a drag
+        haptic();
       }
       drag = null;
     }
