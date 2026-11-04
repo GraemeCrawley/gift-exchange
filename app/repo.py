@@ -195,21 +195,45 @@ def rename_participant(conn, ex_id: int, pid: int, name: str) -> None:
         raise ValidationError(f"{name} is already in this exchange.") from None
 
 
-def set_household(conn, ex_id: int, pid: int, household: str | None) -> None:
-    p = _require_participant(conn, ex_id, pid)
-    household = _clean_text(household, "Household", 30, required=False)
-    if household:
-        # Reuse an existing household's spelling so "a" and "A" are the same household.
-        row = conn.execute(
-            "SELECT household FROM participant WHERE exchange_id=? AND household=? COLLATE NOCASE LIMIT 1",
-            (ex_id, household),
-        ).fetchone()
-        if row:
-            household = row["household"]
-    if household == p.household:
+def _join_names(names: list[str]) -> str:
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " & " + names[-1]
+
+
+def household_labels(people: list[Participant]) -> dict[int, str]:
+    """{person id: "Alex & Jordan"} for everyone in a household, named after its members."""
+    groups: dict[str, list[Participant]] = {}
+    for p in people:
+        if p.household:
+            groups.setdefault(p.household, []).append(p)
+    return {p.id: _join_names([m.display_name for m in members]) for members in groups.values() for p in members}
+
+
+def _partition(pairs) -> set[frozenset[int]]:
+    groups: dict[str, set[int]] = {}
+    for pid, key in pairs:
+        if key:
+            groups.setdefault(key, set()).add(pid)
+    return {frozenset(g) for g in groups.values() if len(g) > 1}
+
+
+def set_households(conn, ex_id: int, choice: dict[int, str]) -> None:
+    """Replace all households. choice maps person id -> any group key ('' = none).
+    People left out get no household. A household needs at least 2 people."""
+    people = list_participants(conn, ex_id)
+    ids = {p.id for p in people}
+    for pid, key in choice.items():
+        if pid not in ids:
+            raise LookupError(pid)
+        if len(key) > 20:
+            raise ValidationError("Something went wrong with the households. Reload the page and try again.")
+    new = _partition(choice.items())
+    if new == _partition((p.id, p.household) for p in people):
         return
+    stored = {pid: str(n) for n, group in enumerate(sorted(new, key=min), 1) for pid in group}
     with transaction(conn):
-        conn.execute("UPDATE participant SET household=? WHERE id=?", (household, pid))
+        conn.executemany(
+            "UPDATE participant SET household=? WHERE id=?", [(stored.get(p.id), p.id) for p in people]
+        )
         _mark_stale(conn, ex_id)
 
 
@@ -235,7 +259,8 @@ def run_draw(conn, ex_id: int) -> None:
     with transaction(conn):
         people = list_participants(conn, ex_id)
         try:
-            result = make_draw([(p.id, p.household) for p in people])
+            labels = household_labels(people)  # so errors name the people, not a number
+            result = make_draw([(p.id, labels.get(p.id)) for p in people])
         except DrawImpossible as e:
             raise ValidationError(e.message) from None
         conn.execute(

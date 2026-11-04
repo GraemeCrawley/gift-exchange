@@ -120,8 +120,9 @@ def test_rename_and_household(client, app):
     client.post(f"{admin}/people/{alex.id}/rename", data={"name": "Avery"})
     assert "Avery" in people(app, admin)
     assert exchange_for(app, admin).draw_state == "current"  # rename keeps the draw
-    client.post(f"{admin}/people/{alex.id}/household", data={"household": "A"})
-    assert people(app, admin)["Avery"].household == "A"
+    jordan = people(app, admin)["Jordan"]
+    client.post(f"{admin}/households", data={f"hh_{alex.id}": "1", f"hh_{jordan.id}": "1"})
+    assert people(app, admin)["Avery"].household is not None
     assert exchange_for(app, admin).draw_state == "stale"  # households change who's allowed
 
 
@@ -135,18 +136,6 @@ def test_reset_claim_changes_token(client, app):
     assert new.personal_token != alex.personal_token
     assert not new.claimed
     assert repo.get_participant_by_token(c, alex.personal_token) is None
-
-
-def test_impossible_household_message(client, app):
-    admin = create(client)
-    add_people(client, admin, NAMES[:4])
-    for n in NAMES[:3]:
-        p = people(app, admin)[n]
-        client.post(f"{admin}/people/{p.id}/household", data={"household": "A"})
-    r = client.post(admin + "/draw")
-    assert r.status_code == 400
-    assert "Household A" in r.text
-    assert exchange_for(app, admin).draw_state == "none"
 
 
 def test_double_draw_post_is_safe(client, app):

@@ -25,7 +25,7 @@ def make_draw(people: list[tuple[int, str | None]], rng: random.Random | None = 
     for house, size in sizes.items():
         if size > n / 2:
             raise DrawImpossible(
-                f"Can't draw: Household {house} has too many people for this group. "
+                f"Can't draw: the household {house} has too many people for this group. "
                 "Move someone out of it or add more people."
             )
 

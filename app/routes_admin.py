@@ -10,7 +10,7 @@ MESSAGES = {
     "added": "Added.",
     "saved": "Saved.",
     "renamed": "Renamed.",
-    "household": "Household updated.",
+    "household": "Households saved.",
     "removed": "Removed.",
     "reset": "Claim reset. Their old link no longer works. Send them the new one below.",
     "drawn": "Names drawn! Now share the group link.",
@@ -38,7 +38,8 @@ def _panel(request: Request, conn, token: str, ex: repo.Exchange, error: str | N
         {
             "ex": ex,
             "token": token,
-            "people": repo.list_participants(conn, ex.id),
+            "people": (people := repo.list_participants(conn, ex.id)),
+            "labels": repo.household_labels(people),
             "message": None if error else msg,
             "error": error,
             "spot": spot,
@@ -100,11 +101,6 @@ def rename(request: Request, token: str, pid: int, name: str = Form(""), conn=De
     return _act(request, conn, token, lambda ex: repo.rename_participant(conn, ex.id, pid, name), "renamed")
 
 
-@router.post("/people/{pid}/household")
-def household(request: Request, token: str, pid: int, household: str = Form(""), conn=Depends(get_conn)):
-    return _act(request, conn, token, lambda ex: repo.set_household(conn, ex.id, pid, household), "household")
-
-
 @router.post("/people/{pid}/remove")
 def remove(request: Request, token: str, pid: int, confirm: str = Form(""), conn=Depends(get_conn)):
     def action(ex):
@@ -128,6 +124,49 @@ def draw(request: Request, token: str, confirm: str = Form(""), conn=Depends(get
         repo.run_draw(conn, ex.id)
 
     return _act(request, conn, token, action, "drawn")
+
+
+@router.get("/households")
+def households_page(request: Request, token: str, conn=Depends(get_conn)):
+    ex = _load(conn, token)
+    people = repo.list_participants(conn, ex.id)
+    # Number the existing households 1, 2, 3... in the order they first appear.
+    keys: dict[str, str] = {}
+    for p in people:
+        if p.household and p.household not in keys:
+            keys[p.household] = str(len(keys) + 1)
+    groups = [
+        {"key": k, "people": [p for p in people if keys.get(p.household or "") == k]} for k in keys.values()
+    ]
+    return render(
+        request,
+        "households.html",
+        {
+            "ex": ex,
+            "token": token,
+            "loose": [p for p in people if not p.household],
+            "groups": groups,
+            "labels": repo.household_labels(people),
+            "keys": {p.id: keys.get(p.household or "", "") for p in people},
+            "people": people,
+            "manifest_url": url(request, f"/a/{token}/manifest.webmanifest"),
+        },
+    )
+
+
+@router.post("/households")
+async def save_households(request: Request, token: str, conn=Depends(get_conn)):
+    form = await request.form()
+    choice: dict[int, str] = {}
+    for name, value in form.multi_items():
+        if not name.startswith("hh_"):
+            continue
+        try:
+            pid = int(name[3:])
+        except ValueError:
+            raise HTTPException(404) from None
+        choice[pid] = str(value).strip()
+    return _act(request, conn, token, lambda ex: repo.set_households(conn, ex.id, choice), "household")
 
 
 @router.get("/manifest.webmanifest")

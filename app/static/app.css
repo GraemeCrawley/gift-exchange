@@ -177,3 +177,39 @@ details > :not(summary) { margin: 0 14px 14px; }
   .btn-primary, .recipient { color: #0E1A13; }
   .notice { background: #1E3329; border-color: #3C6B53; color: #CFEBDD; }
 }
+
+.btn-block { display: flex; align-items: center; justify-content: center; width: 100%; text-decoration: none; box-sizing: border-box; }
+
+/* Households page */
+.hh-box {
+  display: flex; flex-direction: column; gap: 8px; min-height: 88px;
+  padding: 12px; border-radius: 14px;
+  background: var(--surface); border: 2px dashed var(--field);
+}
+.hh-loose { border-style: solid; border-color: var(--line); background: transparent; }
+.hh-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hh-title { margin: 0; font-size: 16px; }
+.hh-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.hh-empty { margin: 0; }
+.hh-delete {
+  min-height: 36px; padding: 0 10px; border: 0; background: none;
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--danger); cursor: pointer;
+}
+.picking .hh-box { border-color: var(--primary); }
+.hh-box.over { border-color: var(--primary); border-style: solid; background: var(--tag-bg); }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px;
+  border-radius: 999px; background: var(--tag-bg); color: var(--tag-ink); font-weight: 600;
+}
+.chip select { min-height: 36px; font: inherit; font-size: 16px; }
+.js-on .chip select { display: none; }
+.js-on .chip {
+  cursor: grab; touch-action: none;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.chip.selected { outline: 3px solid var(--primary); outline-offset: 2px; }
+.chip.placeholder { opacity: .3; }
+.chip-ghost {
+  position: fixed; z-index: 50; margin: 0; pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .3); transform: scale(1.06); cursor: grabbing;
+}

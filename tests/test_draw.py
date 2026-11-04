@@ -41,7 +41,7 @@ def test_too_few():
 
 def test_impossible_household():
     people = [(1, "A"), (2, "A"), (3, "A"), (4, "A"), (5, "B"), (6, "C")]
-    with pytest.raises(DrawImpossible, match="Household A"):
+    with pytest.raises(DrawImpossible, match="household A"):
         make_draw(people)
 
 

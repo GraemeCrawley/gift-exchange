@@ -38,14 +38,14 @@
 
 <h2 id="people">People ({{ people|length }})</h2>
 {% if spot == 'people' %}{{ flash() }}{% endif %}
-<p class="fine">Same household = won't draw each other. Tap a person for more.</p>
+<p class="fine">Tap a person for their link and more.</p>
 <ul class="people">
 {% for p in people %}
   <li>
     <details class="person">
       <summary>
         <span class="person-name">{{ p.display_name }}</span>
-        {% if p.household %}<span class="tag">{{ p.household }}</span>{% endif %}
+        {% if labels.get(p.id) %}<span class="tag">{{ labels[p.id] }}</span>{% endif %}
         <span class="status {{ 'joined' if p.claimed else '' }}">{{ 'Joined' if p.claimed else 'Not yet' }}</span>
       </summary>
       <div class="stack person-body">
@@ -55,11 +55,6 @@
           <label for="rn-{{ p.id }}" class="sr-only">Rename {{ p.display_name }}</label>
           <input id="rn-{{ p.id }}" name="name" maxlength="40" value="{{ p.display_name }}">
           <button class="btn btn-outline-primary">Rename</button>
-        </form>
-        <form method="post" action="{{ url(base ~ '/people/' ~ p.id ~ '/household') }}" class="row">
-          <label for="hh-{{ p.id }}" class="sr-only">Household for {{ p.display_name }}</label>
-          <input id="hh-{{ p.id }}" name="household" maxlength="30" placeholder="Household (optional)" value="{{ p.household or '' }}" list="households">
-          <button class="btn btn-outline-primary">Set</button>
         </form>
         {% if p.claimed %}
         <form method="post" action="{{ url(base ~ '/people/' ~ p.id ~ '/reset') }}" class="stack-sm">
@@ -76,9 +71,6 @@
   </li>
 {% endfor %}
 </ul>
-<datalist id="households">
-{% for h in people|map(attribute='household')|select|unique %}<option value="{{ h }}">{% endfor %}
-</datalist>
 
 <div id="add" class="stack-sm">
 {% if spot == 'add' %}{{ flash() }}{% endif %}
@@ -89,6 +81,8 @@
 </form>
 </div>
 <p class="fine">Taking part yourself? Add your own name too.</p>
+<a class="btn btn-outline-primary btn-block" href="{{ url(base ~ '/households') }}">Households</a>
+<p class="fine">Put couples or people who live together in a household so they don't draw each other.</p>
 
 <hr>
 <h2>Draw names</h2>

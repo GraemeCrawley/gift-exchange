@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Households · {{ ex.name }}{% endblock %}
+{% block content %}
+{% set base = '/a/' ~ token %}
+{% macro chip(p, key) %}
+<div class="chip" data-pid="{{ p.id }}">
+  <span class="chip-name">{{ p.display_name }}</span>
+  <select name="hh_{{ p.id }}" aria-label="Household for {{ p.display_name }}">
+    <option value="">Not in a household</option>
+    {% for g in groups %}<option value="{{ g.key }}"{% if g.key == key %} selected{% endif %}>Household {{ loop.index }}</option>{% endfor %}
+    <option value="new">New household</option>
+  </select>
+</div>
+{% endmacro %}
+
+<p><a href="{{ url(base) }}">&larr; Back to organizer page</a></p>
+<h1>Households</h1>
+<p class="fine">People in the same household won't draw each other. Drag a name into a household, or tap a name and then tap a household. Press <strong>Save households</strong> when you're done.</p>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+<form method="post" action="{{ url(base ~ '/households') }}" class="stack" data-households>
+  <section class="hh-box hh-loose" data-key="">
+    <h2 class="hh-title">Not in a household</h2>
+    <div class="hh-chips">{% for p in loose %}{{ chip(p, '') }}{% endfor %}</div>
+    <p class="hh-empty fine"{% if loose %} hidden{% endif %}>Everyone is in a household.</p>
+  </section>
+
+  <div class="hh-groups stack">
+  {% for g in groups %}
+    <section class="hh-box" data-key="{{ g.key }}">
+      <div class="hh-head">
+        <h2 class="hh-title">{{ labels[g.people[0].id] }}</h2>
+        <button type="button" class="hh-delete" data-delete-household hidden>Remove</button>
+      </div>
+      <div class="hh-chips">{% for p in g.people %}{{ chip(p, g.key) }}{% endfor %}</div>
+      <p class="hh-empty fine" hidden>Drag names here.</p>
+    </section>
+  {% endfor %}
+  </div>
+
+  <template id="hh-new">
+    <section class="hh-box" data-key="">
+      <div class="hh-head">
+        <h2 class="hh-title">New household</h2>
+        <button type="button" class="hh-delete" data-delete-household>Remove</button>
+      </div>
+      <div class="hh-chips"></div>
+      <p class="hh-empty fine">Drag names here, or tap a name and then tap here.</p>
+    </section>
+  </template>
+
+  <button type="button" class="btn btn-outline-primary" data-add-household hidden>+ Add household</button>
+  <p class="fine" data-unsaved hidden>You have changes that aren't saved yet.</p>
+  <button class="btn btn-primary btn-big">Save households</button>
+</form>
+{% endblock %}
