@@ -9,7 +9,7 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 def url(request: Request, path: str) -> str:
     """Absolute path including the app's prefix (e.g. /gift-exchange)."""
-    return request.scope.get("root_path", "") + path
+    return request.app.state.prefix + path
 
 
 def full_url(request: Request, path: str) -> str:
@@ -44,3 +44,26 @@ def redirect(request: Request, path: str):
     from fastapi.responses import RedirectResponse
 
     return RedirectResponse(url(request, path), status_code=303)
+
+
+def manifest(request: Request, name: str, path: str):
+    """Web app manifest so 'Add to Home Screen' reopens this exact page."""
+    from fastapi.responses import JSONResponse
+
+    start = url(request, path)
+    return JSONResponse(
+        {
+            "name": name,
+            "short_name": name[:12],
+            "start_url": start,
+            "scope": start,
+            "display": "standalone",
+            "background_color": "#F7F4EE",
+            "theme_color": "#2F6B4F",
+            "icons": [
+                {"src": url(request, "/static/icon-192.png"), "sizes": "192x192", "type": "image/png"},
+                {"src": url(request, "/static/icon-512.png"), "sizes": "512x512", "type": "image/png"},
+            ],
+        },
+        media_type="application/manifest+json",
+    )

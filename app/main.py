@@ -13,13 +13,15 @@ from app.security import RedactTokensFilter, security_headers
 
 def create_app(db_path: str | None = None, root_path: str | None = None) -> FastAPI:
     settings = load_settings()
+    # Traefik strips the prefix before requests arrive, so the app only uses it to
+    # build links. (Passing it to FastAPI's root_path breaks static file paths.)
     app = FastAPI(
-        root_path=settings.root_path if root_path is None else root_path,
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
     )
     app.state.db_path = db_path or settings.db_path
+    app.state.prefix = (settings.root_path if root_path is None else root_path).rstrip("/")
     conn = db.connect(app.state.db_path)
     db.init_schema(conn)
     conn.close()

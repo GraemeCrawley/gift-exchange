@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 
 from app import repo
-from app.web import get_conn, redirect, render
+from app.web import get_conn, manifest, redirect, render, url
 
 router = APIRouter(prefix="/a/{token}")
 
@@ -35,6 +35,7 @@ def _panel(request: Request, conn, token: str, ex: repo.Exchange, error: str | N
             "people": repo.list_participants(conn, ex.id),
             "message": None if error else msg,
             "error": error,
+            "manifest_url": url(request, f"/a/{token}/manifest.webmanifest"),
         },
         status=status,
     )
@@ -44,7 +45,7 @@ def _panel(request: Request, conn, token: str, ex: repo.Exchange, error: str | N
 def panel(request: Request, token: str, conn=Depends(get_conn)):
     ex = _load(conn, token)
     if not ex.admin_link_saved:
-        return render(request, "admin_saved.html", {"ex": ex, "token": token})
+        return render(request, "admin_saved.html", {"ex": ex, "token": token, "manifest_url": url(request, f"/a/{token}/manifest.webmanifest")})
     return _panel(request, conn, token, ex)
 
 
@@ -114,3 +115,9 @@ def reset(request: Request, token: str, pid: int, conn=Depends(get_conn)):
 @router.post("/draw")
 def draw(request: Request, token: str, conn=Depends(get_conn)):
     return _act(request, conn, token, lambda ex: repo.run_draw(conn, ex.id), "drawn")
+
+
+@router.get("/manifest.webmanifest")
+def web_manifest(request: Request, token: str, conn=Depends(get_conn)):
+    ex = _load(conn, token)
+    return manifest(request, ex.name, f"/a/{token}")

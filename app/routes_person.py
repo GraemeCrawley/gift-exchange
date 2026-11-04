@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 
 from app import repo
-from app.web import get_conn, redirect, render
+from app.web import get_conn, manifest, redirect, render, url
 
 router = APIRouter(prefix="/p/{token}")
 
@@ -26,6 +26,7 @@ def person_page(request: Request, conn, p: repo.Participant, ex: repo.Exchange, 
             "recipient_items": repo.list_items(conn, recipient.id) if recipient else [],
             "my_items": repo.list_items(conn, p.id),
             "error": error,
+            "manifest_url": url(request, f"/p/{p.personal_token}/manifest.webmanifest"),
         },
         status=status,
     )
@@ -36,7 +37,7 @@ def page(request: Request, token: str, conn=Depends(get_conn)):
     p, ex = _load(conn, token)
     repo.claim_by_token(conn, p)
     if not p.link_saved and request.query_params.get("later") != "1":
-        return render(request, "person_save.html", {"p": p, "ex": ex, "token": token})
+        return render(request, "person_save.html", {"p": p, "ex": ex, "token": token, "manifest_url": url(request, f"/p/{token}/manifest.webmanifest")})
     return person_page(request, conn, p, ex)
 
 
@@ -77,3 +78,9 @@ def edit_item(request: Request, token: str, item_id: int, text: str = Form(""), 
 @router.post("/items/{item_id}/delete")
 def delete_item(request: Request, token: str, item_id: int, conn=Depends(get_conn)):
     return _item_action(request, conn, token, lambda p: repo.delete_item(conn, p.id, item_id))
+
+
+@router.get("/manifest.webmanifest")
+def web_manifest(request: Request, token: str, conn=Depends(get_conn)):
+    ex = _load(conn, token)[1]
+    return manifest(request, ex.name, f"/p/{token}")
