@@ -30,3 +30,22 @@ async def security_headers(request: Request, call_next):
     if request.url.path.startswith(_PRIVATE_PREFIXES):
         response.headers["Cache-Control"] = "no-store"
     return response
+
+
+def same_origin_ok(request: Request) -> bool:
+    """Block form posts from other websites. Browsers send Origin on POST."""
+    from urllib.parse import urlsplit
+
+    origin = request.headers.get("origin")
+    if origin is None:
+        return True
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host", "")
+    return urlsplit(origin).netloc == host.split(",")[0].strip()
+
+
+async def origin_check(request: Request, call_next):
+    if request.method == "POST" and not same_origin_ok(request):
+        from fastapi.responses import PlainTextResponse
+
+        return PlainTextResponse("Forbidden: this form was sent from another website.", status_code=403)
+    return await call_next(request)

@@ -343,3 +343,18 @@ def update_item(conn, pid: int, item_id: int, text: str, url: str | None) -> Non
 def delete_item(conn, pid: int, item_id: int) -> None:
     _require_item(conn, pid, item_id)
     conn.execute("DELETE FROM wish_item WHERE id=? AND participant_id=?", (item_id, pid))
+
+
+def delete_expired(conn, today) -> int:
+    """Delete exchanges 60 days after their date, or 1 year after creation if undated."""
+    from datetime import timedelta
+
+    dated_cutoff = (today - timedelta(days=60)).isoformat()
+    undated_cutoff = (today - timedelta(days=365)).isoformat()
+    cur = conn.execute(
+        """DELETE FROM exchange
+           WHERE (exchange_date IS NOT NULL AND exchange_date < ?)
+              OR (exchange_date IS NULL AND substr(created_at, 1, 10) < ?)""",
+        (dated_cutoff, undated_cutoff),
+    )
+    return cur.rowcount

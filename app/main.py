@@ -1,4 +1,7 @@
+import asyncio
 import logging
+from contextlib import asynccontextmanager
+from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -6,9 +9,29 @@ from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app import db, routes_admin, routes_home, routes_join, routes_person, web
+from app import db, ratelimit, repo, routes_admin, routes_home, routes_join, routes_person, web
 from app.config import load_settings
-from app.security import RedactTokensFilter, security_headers
+from app.security import RedactTokensFilter, origin_check, security_headers
+
+
+def _cleanup(db_path: str) -> None:
+    conn = db.connect(db_path)
+    try:
+        repo.delete_expired(conn, date.today())
+    finally:
+        conn.close()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async def daily():
+        while True:
+            await asyncio.to_thread(_cleanup, app.state.db_path)
+            await asyncio.sleep(24 * 3600)
+
+    task = asyncio.create_task(daily())
+    yield
+    task.cancel()
 
 
 def create_app(db_path: str | None = None, root_path: str | None = None) -> FastAPI:
@@ -16,6 +39,7 @@ def create_app(db_path: str | None = None, root_path: str | None = None) -> Fast
     # Traefik strips the prefix before requests arrive, so the app only uses it to
     # build links. (Passing it to FastAPI's root_path breaks static file paths.)
     app = FastAPI(
+        lifespan=lifespan,
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
@@ -26,6 +50,9 @@ def create_app(db_path: str | None = None, root_path: str | None = None) -> Fast
     db.init_schema(conn)
     conn.close()
 
+    app.state.limiters = ratelimit.make_limiters()
+
+    app.middleware("http")(origin_check)
     app.middleware("http")(security_headers)
     logging.getLogger("uvicorn.access").addFilter(RedactTokensFilter())
 

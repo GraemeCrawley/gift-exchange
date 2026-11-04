@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, Request
 
-from app import repo
+from app import ratelimit, repo
 from app.web import get_conn, redirect, render
 
 router = APIRouter()
@@ -13,6 +13,7 @@ def home(request: Request):
 
 @router.post("/create")
 def create(request: Request, name: str = Form(""), conn=Depends(get_conn)):
+    ratelimit.check(request, "create")
     try:
         _, raw = repo.create_exchange(conn, name)
     except repo.ValidationError as e:

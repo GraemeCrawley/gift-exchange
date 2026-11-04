@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from app import repo
+from app import ratelimit, repo
 from app.web import get_conn, redirect, render
 
 router = APIRouter(prefix="/j/{join_token}")
@@ -29,6 +29,7 @@ def join(request: Request, join_token: str, conn=Depends(get_conn)):
 
 @router.post("/claim/{pid}")
 def claim(request: Request, join_token: str, pid: int, conn=Depends(get_conn)):
+    ratelimit.check(request, "claim")
     ex = _load(conn, join_token)
     if ex.draw_state == "none":
         return _page(request, conn, ex, join_token)

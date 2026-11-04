@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 
-from app import repo
+from app import ratelimit, repo
 from app.web import get_conn, manifest, redirect, render, url
 
 router = APIRouter(prefix="/p/{token}")
@@ -55,6 +55,7 @@ def saved(request: Request, token: str, saved: str = Form(""), conn=Depends(get_
 
 
 def _item_action(request: Request, conn, token: str, action):
+    ratelimit.check(request, "wish")
     p, ex = _load(conn, token)
     try:
         action(p)
