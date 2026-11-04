@@ -1,0 +1,38 @@
+# deploy/compose.yml — app-owned Compose fragment for gift-exchange.
+#
+# Infra references this via `include:` in infrastructure/docker-compose.yml
+# (see infrastructure/docs/GIT_CONVENTIONS.md → "Deploying an app into the stack").
+# Routing is NOT here: the stack routes by Traefik FILE provider, so the route
+# lives in deploy/dynamic-gift-exchange.yml.
+#
+# Self-contained: data lives in SQLite on the `gift_data` volume, so this app
+# needs no shared postgres and joins only the `web` network.
+
+services:
+  gift-exchange:
+    build: ..
+    container_name: gift-exchange
+    environment:
+      ROOT_PATH: /gift-exchange
+      GIFT_DB_PATH: /data/gift.db
+      TZ: America/Toronto
+    volumes:
+      - gift_data:/data
+    networks:
+      - web
+    labels:
+      - "portal.tile=true"
+      - "portal.title=Gift Exchange"
+      - "portal.description=Secret Santa without accounts: draw names, share one link, wish lists."
+      - "portal.section=apps"
+      - "portal.url=https://apps.graemecrawley.com/gift-exchange/"
+      - "prometheus.scrape=true"
+      - "prometheus.port=8000"
+    restart: unless-stopped
+
+volumes:
+  gift_data:
+
+networks:
+  web:
+    driver: bridge

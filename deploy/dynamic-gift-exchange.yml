@@ -1,0 +1,45 @@
+# Traefik dynamic config for gift-exchange.
+#
+# Path-based on the existing apps host: apps.graemecrawley.com/gift-exchange/*
+# → http://gift-exchange:8000/* (after strip). The app builds its links from
+# ROOT_PATH=/gift-exchange.
+#
+# PUBLIC app: participants have no login, so this route must NOT sit behind
+# any auth middleware.
+#
+# Infra wires this in by BIND-MOUNTING this file into the traefik container:
+#
+#   - ../gift-exchange/deploy/dynamic-gift-exchange.yml:/etc/traefik/dynamic-gift-exchange.yml:ro
+#
+# NOT a symlink in traefik/ (a symlink out of the mounted dir dangles inside the
+# container). After adding the mount, RECREATE traefik.
+
+http:
+  routers:
+    gift-exchange:
+      rule: "Host(`apps.graemecrawley.com`) && PathPrefix(`/gift-exchange`)"
+      entryPoints:
+        - web
+      service: gift-exchange
+      middlewares:
+        - gift-exchange-slash
+        - gift-exchange-strip
+        - rate-limit
+      priority: 220   # higher than apps-portal (200)
+
+  services:
+    gift-exchange:
+      loadBalancer:
+        servers:
+          - url: "http://gift-exchange:8000"
+
+  middlewares:
+    gift-exchange-slash:
+      redirectRegex:
+        regex: "^(https?://[^/]+/gift-exchange)$"
+        replacement: "${1}/"
+        permanent: true
+    gift-exchange-strip:
+      stripPrefix:
+        prefixes:
+          - "/gift-exchange"
