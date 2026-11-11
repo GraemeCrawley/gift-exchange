@@ -21,6 +21,7 @@ S = 4  # draw big, shrink down, for smooth edges
 
 
 def star(cx, cy, r_out, r_in):
+    # cy is the star's middle; callers nudge it down so the gaps above and below look even.
     import math
 
     pts = []
@@ -48,7 +49,7 @@ def draw(color: dict, organizer: bool) -> Image.Image:
         cx, cy, r = 386, 386, 84  # kept clear of the corner iPhone rounds off
         d.ellipse(k(cx - r - 12, cy - r - 12, cx + r + 12, cy + r + 12), fill=color["primary"])
         d.ellipse(k(cx - r, cy - r, cx + r, cy + r), fill="#FFFFFF")
-        d.polygon([(x * S, y * S) for x, y in star(cx, cy + 4, 60, 25)], fill="#E0A21B")
+        d.polygon([(x * S, y * S) for x, y in star(cx, cy + 7, 60, 25)], fill="#E0A21B")
     return img
 
 

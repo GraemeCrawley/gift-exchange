@@ -51,8 +51,8 @@ def test_organizer_icon_differs_from_everyone_elses(client, app):
     save(client, admin, "purple")
     ex = exchange_for(app, admin)
     alex = people(app, admin)["Alex"]
-    assert 'rel="apple-touch-icon" href="/static/icons/purple-organizer-180.png"' in client.get(admin).text
-    member = 'rel="apple-touch-icon" href="/static/icons/purple-member-180.png"'
+    assert 'rel="apple-touch-icon" href="/static/icons/purple-organizer-180.png?v=' in client.get(admin).text
+    member = 'rel="apple-touch-icon" href="/static/icons/purple-member-180.png?v='
     assert member in client.get("/j/" + ex.join_token).text
     assert member in client.get("/p/" + alex.personal_token).text
 
@@ -90,3 +90,16 @@ def test_old_database_gets_colour_column(tmp_path):
     db.init_schema(conn)
     db.init_schema(conn)  # safe to run twice
     assert conn.execute("SELECT color FROM exchange").fetchone()[0] == "green"
+
+
+def test_icon_change_changes_version(tmp_path, monkeypatch):
+    from app import web
+
+    before = web._static_version()
+    icon = Path(web.__file__).parent / "static" / "icons" / "green-member-180.png"
+    original = icon.read_bytes()
+    try:
+        icon.write_bytes(original + b"x")
+        assert web._static_version() != before
+    finally:
+        icon.write_bytes(original)

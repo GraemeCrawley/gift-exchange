@@ -41,12 +41,13 @@ templates.env.filters["money"] = money
 
 
 def _static_version() -> str:
-    """Short hash of the CSS and JS, added to their links so phones fetch new copies after a deploy."""
+    """Short hash of the CSS, JS and icons, added to their links so phones fetch new copies after a deploy."""
     import hashlib
 
+    static = Path(__file__).parent / "static"
     h = hashlib.sha256()
-    for name in ("app.css", "app.js"):
-        h.update((Path(__file__).parent / "static" / name).read_bytes())
+    for f in [static / "app.css", static / "app.js", *sorted((static / "icons").glob("*.png"))]:
+        h.update(f.read_bytes())
     return h.hexdigest()[:10]
 
 
@@ -120,7 +121,7 @@ def manifest(request: Request, name: str, path: str, color: str = "green", role:
             "background_color": "#F7F4EE",
             "theme_color": theme(color)["primary"],
             "icons": [
-                {"src": url(request, icon_path(color, role, n)), "sizes": f"{n}x{n}", "type": "image/png"}
+                {"src": url(request, icon_path(color, role, n)) + "?v=" + templates.env.globals["static_version"], "sizes": f"{n}x{n}", "type": "image/png"}
                 for n in (192, 512)
             ],
         },
