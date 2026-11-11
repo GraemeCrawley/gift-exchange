@@ -276,6 +276,13 @@ def run_draw(conn, ex_id: int) -> None:
             "DELETE FROM assignment WHERE giver_id IN (SELECT id FROM participant WHERE exchange_id=?)", (ex_id,)
         )
         conn.executemany("INSERT INTO assignment(giver_id, receiver_id) VALUES (?,?)", result.items())
+        # A re-draw is a fresh start: everyone picks their name again; old personal links stop working.
+        for p in people:
+            if p.claimed or p.link_saved:
+                conn.execute(
+                    "UPDATE participant SET personal_token=?, claimed_at=NULL, link_saved_at=NULL WHERE id=?",
+                    (new_token(), p.id),
+                )
         conn.execute("UPDATE exchange SET draw_state='current' WHERE id=?", (ex_id,))
 
 

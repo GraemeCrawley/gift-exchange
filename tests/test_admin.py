@@ -90,7 +90,7 @@ def test_add_after_draw_marks_stale(client, app):
     add_people(client, admin, ["Taylor"])
     assert exchange_for(app, admin).draw_state == "stale"
     page = client.get(admin).text
-    assert "Everyone gets a new person. Links and wish lists are kept." in page
+    assert "Everyone gets a new person and picks their name again from the group link." in page
     assert "Re-draw" in page
 
 
@@ -151,10 +151,32 @@ def test_double_draw_post_is_safe(client, app):
 def test_redraw_requires_confirm(client, app):
     admin = drawn(client, app)
     page = client.get(admin).text
-    assert "Everyone gets a new person. Links and wish lists are kept." in page
+    assert "Everyone gets a new person and picks their name again from the group link." in page
     assert client.post(admin + "/draw", data={"confirm": "on"}).status_code == 303
     rows = conn_for(app).execute("SELECT receiver_id FROM assignment").fetchall()
     assert len({r[0] for r in rows}) == 4
+
+
+def test_redraw_resets_claims_and_links(client, app):
+    admin = drawn(client, app)
+    alex = people(app, admin)["Alex"]
+    join = "/j/" + exchange_for(app, admin).join_token
+    client.post(f"{join}/claim/{alex.id}")
+    client.post(f"/p/{alex.personal_token}/saved", data={"saved": "on"})
+    client.post(admin + "/draw", data={"confirm": "on"})
+    after = people(app, admin)["Alex"]
+    assert not after.claimed and not after.link_saved
+    assert after.personal_token != alex.personal_token
+    assert client.get("/p/" + alex.personal_token).status_code == 404  # old link stops working
+    assert f"/claim/{alex.id}" in client.get(join).text  # can pick the name again
+
+
+def test_first_draw_keeps_claims_untouched(client, app):
+    admin = create(client)
+    add_people(client, admin, ["Alex", "Jordan", "Morgan"])
+    before = people(app, admin)["Alex"].personal_token
+    client.post(admin + "/draw")
+    assert people(app, admin)["Alex"].personal_token == before
 
 
 def test_settings_saved_and_shown(client, app):
