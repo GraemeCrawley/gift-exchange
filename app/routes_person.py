@@ -84,4 +84,4 @@ def delete_item(request: Request, token: str, item_id: int, conn=Depends(get_con
 @router.get("/manifest.webmanifest")
 def web_manifest(request: Request, token: str, conn=Depends(get_conn)):
     ex = _load(conn, token)[1]
-    return manifest(request, ex.name, f"/p/{token}")
+    return manifest(request, ex.name, f"/p/{token}", ex.color, "member")

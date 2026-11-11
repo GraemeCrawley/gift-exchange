@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS exchange(
   join_token TEXT NOT NULL UNIQUE,
   draw_state TEXT NOT NULL DEFAULT 'none' CHECK(draw_state IN ('none','current','stale')),
   admin_link_saved_at TEXT,
-  created_at TEXT NOT NULL);
+  created_at TEXT NOT NULL,
+  color TEXT NOT NULL DEFAULT 'green');
 CREATE TABLE IF NOT EXISTS participant(
   id INTEGER PRIMARY KEY,
   exchange_id INTEGER NOT NULL REFERENCES exchange(id) ON DELETE CASCADE,
@@ -50,3 +51,7 @@ def connect(path: str) -> sqlite3.Connection:
 
 def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    # Databases made before colours existed: add the column.
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(exchange)")}
+    if "color" not in cols:
+        conn.execute("ALTER TABLE exchange ADD COLUMN color TEXT NOT NULL DEFAULT 'green'")

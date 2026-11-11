@@ -32,6 +32,15 @@
         <input id="ex-limit" name="price_limit" maxlength="20" placeholder="e.g. $50 (optional)" value="{{ ex.price_limit|money }}">
       </div>
     </div>
+    <fieldset class="swatches">
+      <legend>Colour</legend>
+      <p class="fine">Shows on everyone's pages and Home Screen icon, so you can tell exchanges apart.</p>
+      <div class="swatch-row">
+      {% for key, t in themes.items() %}
+        <label class="swatch" style="--sw: {{ t.primary }}"><input type="radio" name="color" value="{{ key }}"{% if key == color %} checked{% endif %}><span>{{ t.label }}</span></label>
+      {% endfor %}
+      </div>
+    </fieldset>
     <button class="btn btn-outline-primary">Save details</button>
   </form>
 </details>

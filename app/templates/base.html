@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-color="{{ color }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,9 +9,9 @@
 {% if manifest_url %}<link rel="manifest" href="{{ manifest_url }}">{% endif %}
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#2F6B4F">
-<link rel="icon" type="image/png" href="{{ url('/static/icon-192.png') }}">
-<link rel="apple-touch-icon" href="{{ url('/static/icon-192.png') }}">
+<meta name="theme-color" content="{{ theme_primary }}">
+<link rel="icon" type="image/png" href="{{ url(fav_icon) }}">
+<link rel="apple-touch-icon" href="{{ url(touch_icon) }}">
 </head>
 <body>
 <main class="page">

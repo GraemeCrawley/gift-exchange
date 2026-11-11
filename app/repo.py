@@ -23,6 +23,7 @@ class Exchange:
     join_token: str
     draw_state: Literal["none", "current", "stale"]
     admin_link_saved: bool
+    color: str = "green"
 
 
 @dataclass
@@ -70,6 +71,7 @@ def _exchange(row) -> Exchange | None:
         join_token=row["join_token"],
         draw_state=row["draw_state"],
         admin_link_saved=row["admin_link_saved_at"] is not None,
+        color=row["color"],
     )
 
 
@@ -160,14 +162,21 @@ def money(value: str | None) -> str:
     return "$" + value if re.fullmatch(r"\d+(\.\d{1,2})?", value) else value
 
 
-def update_settings(conn, ex_id: int, name: str, exchange_date: str | None, price_limit: str | None) -> None:
+def update_settings(
+    conn, ex_id: int, name: str, exchange_date: str | None, price_limit: str | None, color: str | None = None
+) -> None:
+    from app.themes import THEMES
+
+    if color and color not in THEMES:
+        raise ValidationError("Pick one of the colours shown.")
     name = _clean_text(name, "Exchange name", 80)
     date = _clean_date(exchange_date)
     limit = _clean_text(price_limit, "Price limit", 20, required=False)
     if limit:
         limit = money(limit)
     conn.execute(
-        "UPDATE exchange SET name=?, exchange_date=?, price_limit=? WHERE id=?", (name, date, limit, ex_id)
+        "UPDATE exchange SET name=?, exchange_date=?, price_limit=?, color=COALESCE(?, color) WHERE id=?",
+        (name, date, limit, color or None, ex_id),
     )
 
 

@@ -69,8 +69,16 @@ def full_url(request: Request, path: str) -> str:
 
 
 def render(request: Request, name: str, ctx: dict | None = None, status: int = 200):
+    from app.themes import THEMES, icon_path, theme
+
     context = {"url": lambda p: url(request, p), "full_url": lambda p: full_url(request, p)}
     context.update(ctx or {})
+    # Each exchange has its own colour; the organizer's Home Screen icon has a star badge.
+    ex = context.get("ex")
+    color = getattr(ex, "color", None) or "green"
+    role = "organizer" if request.scope["path"].startswith("/a/") else "member"
+    context.update(color=color, themes=THEMES, theme_primary=theme(color)["primary"],
+                   touch_icon=icon_path(color, role, 180), fav_icon=icon_path(color, role, 192))
     return templates.TemplateResponse(request, name, context, status_code=status)
 
 
@@ -95,9 +103,11 @@ def redirect(request: Request, path: str):
     return RedirectResponse(url(request, path), status_code=303)
 
 
-def manifest(request: Request, name: str, path: str):
+def manifest(request: Request, name: str, path: str, color: str = "green", role: str = "member"):
     """Web app manifest so 'Add to Home Screen' reopens this exact page."""
     from fastapi.responses import JSONResponse
+
+    from app.themes import icon_path, theme
 
     start = url(request, path)
     return JSONResponse(
@@ -108,10 +118,10 @@ def manifest(request: Request, name: str, path: str):
             "scope": start,
             "display": "standalone",
             "background_color": "#F7F4EE",
-            "theme_color": "#2F6B4F",
+            "theme_color": theme(color)["primary"],
             "icons": [
-                {"src": url(request, "/static/icon-192.png"), "sizes": "192x192", "type": "image/png"},
-                {"src": url(request, "/static/icon-512.png"), "sizes": "512x512", "type": "image/png"},
+                {"src": url(request, icon_path(color, role, n)), "sizes": f"{n}x{n}", "type": "image/png"}
+                for n in (192, 512)
             ],
         },
         media_type="application/manifest+json",

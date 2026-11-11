@@ -86,9 +86,12 @@ def settings(
     name: str = Form(""),
     exchange_date: str = Form(""),
     price_limit: str = Form(""),
+    color: str = Form(""),
     conn=Depends(get_conn),
 ):
-    return _act(request, conn, token, lambda ex: repo.update_settings(conn, ex.id, name, exchange_date, price_limit), "saved")
+    return _act(
+        request, conn, token, lambda ex: repo.update_settings(conn, ex.id, name, exchange_date, price_limit, color), "saved"
+    )
 
 
 @router.post("/people")
@@ -172,4 +175,4 @@ async def save_households(request: Request, token: str, conn=Depends(get_conn)):
 @router.get("/manifest.webmanifest")
 def web_manifest(request: Request, token: str, conn=Depends(get_conn)):
     ex = _load(conn, token)
-    return manifest(request, ex.name, f"/a/{token}")
+    return manifest(request, ex.name, f"/a/{token}", ex.color, "organizer")
