@@ -9,3 +9,9 @@
 **Decisions:** Household labels derived from member names; stored value is an opaque group key. Claim is now GET confirm page + POST.
 **Gotchas:** Chrome skips autofocus when URL has a #fragment, and the fragment jump clears focus — focus in JS after load. Restart local uvicorn after adding Jinja filters.
 **Next:** Infra rebuild of 5225a6d; Graeme phone test (does Share… sheet offer Add to Home Screen on iPhone?); merge mvp → main.
+
+## 2026-11-13
+**Worked on:** Re-draw resets claims; per-exchange colour (picked at creation too) with organizer star icon; shorter "Save this page" (Home Screen steps first, copy as backup, no Share… button). Repo public on GitHub.
+**Decisions:** Icons are pre-made PNGs per colour/role (scripts/make_icons.py). Colour chosen on the create form because iPhone never updates an added icon.
+**Gotchas:** Black icons on iPhone = iOS Dark icon style (Edit → Customize → Light). `uv run --with` in repo root creates uv.lock; use --no-project.
+**Next:** Push 56232d2 + 1dda893 to GitHub if Graeme says so; fit in the designer's new icon if one arrives.
