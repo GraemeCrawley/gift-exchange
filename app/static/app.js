@@ -29,10 +29,10 @@
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(
           function () { flash(button, "Copied!"); },
-          function () { flash(button, fallbackCopy(text) ? "Copied!" : "Press and hold the link to copy"); }
+          function () { flash(button, fallbackCopy(text) ? "Copied!" : (document.querySelector(".link") ? "Press and hold the link to copy" : "Couldn't copy. Use Add to Home Screen.")); }
         );
       } else {
-        flash(button, fallbackCopy(text) ? "Copied!" : "Press and hold the link to copy");
+        flash(button, fallbackCopy(text) ? "Copied!" : (document.querySelector(".link") ? "Press and hold the link to copy" : "Couldn't copy. Use Add to Home Screen."));
       }
     });
   });

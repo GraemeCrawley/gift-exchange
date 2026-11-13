@@ -248,3 +248,14 @@ a.name { box-sizing: border-box; color: var(--ink); text-decoration: none; }
   background: var(--sw); border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--field); flex: none; }
 .swatch input:checked { box-shadow: 0 0 0 3px var(--ink); }
 .swatch:has(input:checked) { border-color: var(--ink); font-weight: 600; }
+
+/* Save-your-link box: Home Screen steps first, copy as backup. */
+.savebox { display: flex; flex-direction: column; gap: 12px; }
+.save-steps { margin: 0; padding: 14px 16px 14px 40px; background: var(--surface); border: 2px solid var(--primary);
+  border-radius: 12px; font-size: 18px; line-height: 1.4; display: flex; flex-direction: column; gap: 10px; }
+.save-steps li::marker { font-weight: 700; color: var(--primary); }
+.share-glyph { display: inline-flex; vertical-align: -5px; color: var(--primary); }
+.savebox-danger .save-steps { border-color: var(--danger); }
+.savebox-danger .save-steps li::marker, .savebox-danger .share-glyph { color: var(--danger); }
+.savebox-reminder .save-steps { border-color: var(--warn-line); color: var(--ink); }
+.savebox-reminder .save-steps li::marker, .savebox-reminder .share-glyph { color: var(--warn-ink); }

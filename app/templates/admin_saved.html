@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% from "_sharebox.html" import sharebox %}
+{% from "_sharebox.html" import save_link %}
 {% block title %}Save your organizer link{% endblock %}
 {% block content %}
 <p class="eyebrow">{{ ex.name }}</p>
 <div class="alert alert-danger stack">
   <h1>This is your organizer link. Don't lose it.</h1>
   <p>There's no account or password. Without this link you can't manage the exchange. Never post it in the group chat.</p>
-  {{ sharebox(full_url('/a/' ~ token), "Copy link", "danger", ex.name ~ " (organizer)", tips=True) }}
+  {{ save_link(full_url('/a/' ~ token), "danger") }}
 </div>
 <form method="post" action="{{ url('/a/' ~ token ~ '/saved') }}" class="stack" data-gate>
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}

@@ -31,7 +31,7 @@ def test_claim_redirects_to_personal_and_shows_save_step(client, app):
     assert r.status_code == 303
     assert r.headers["location"] == "/p/" + alex.personal_token
     page = client.get(r.headers["location"]).text
-    assert "Save your personal link now" in page
+    assert "Save this page" in page
     assert "http://testserver/p/" + alex.personal_token in page
     assert "saved my link" in page
 

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% from "_sharebox.html" import sharebox %}
+{% from "_sharebox.html" import save_link %}
 {% block title %}Save your link{% endblock %}
 {% block content %}
 <p class="eyebrow">{{ ex.name }}</p>
-<h1>Hi {{ p.display_name }}. Save your personal link now.</h1>
-<p>This link is the only way back to your page. It shows who you're buying for, so don't share it.</p>
-{{ sharebox(full_url('/p/' ~ token), "Copy link", "primary", ex.name, tips=True) }}
+<h1>Hi {{ p.display_name }}. Save this page.</h1>
+<p>It's the only way back to who you're buying for. Keep it to yourself.</p>
+{{ save_link(full_url('/p/' ~ token)) }}
 <form method="post" action="{{ url('/p/' ~ token ~ '/saved') }}" class="stack" data-gate>
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
   <label class="check"><input type="checkbox" name="saved" value="on" data-gate-box> I've saved my link</label>

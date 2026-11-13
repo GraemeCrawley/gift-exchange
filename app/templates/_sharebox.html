@@ -12,3 +12,15 @@
   {% endif %}
 </div>
 {% endmacro %}
+
+{# How to keep a private link: Home Screen first (browser's own Share button), copy as backup.
+   No Share… button of ours: its sheet has no Add to Home Screen. #}
+{% macro save_link(link, kind="primary") %}
+<div class="savebox savebox-{{ kind }}">
+  <ol class="save-steps">
+    <li>Tap <span class="share-glyph" role="img" aria-label="Share"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M8 11H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span> in your browser's toolbar</li>
+    <li>Choose <strong>Add to Home Screen</strong></li>
+  </ol>
+  <button type="button" class="btn btn-outline-{{ kind }}" data-copy="{{ link }}">Or copy the link</button>
+</div>
+{% endmacro %}

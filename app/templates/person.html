@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% from "_sharebox.html" import sharebox %}
+{% from "_sharebox.html" import save_link %}
 {% block title %}{{ ex.name }}{% endblock %}
 {% block content %}
 {% if not p.link_saved %}
 <div class="alert alert-reminder stack-sm">
   <span>Haven't saved your link yet?</span>
-  {{ sharebox(full_url('/p/' ~ token), "Copy", "reminder", ex.name, tips=True) }}
+  {{ save_link(full_url('/p/' ~ token), "reminder") }}
   <form method="post" action="{{ url('/p/' ~ token ~ '/saved') }}" class="row">
     <input type="hidden" name="saved" value="on">
     <button class="btn btn-outline-reminder">I've saved it</button>
