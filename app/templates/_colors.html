@@ -1,0 +1,12 @@
+{# Colour swatches for an exchange. `selected` is the current colour key. #}
+{% macro color_picker(selected, note) %}
+<fieldset class="swatches">
+  <legend>Colour</legend>
+  <p class="fine">{{ note }}</p>
+  <div class="swatch-row">
+  {% for key, t in themes.items() %}
+    <label class="swatch" style="--sw: {{ t.primary }}"><input type="radio" name="color" value="{{ key }}"{% if key == selected %} checked{% endif %}><span>{{ t.label }}</span></label>
+  {% endfor %}
+  </div>
+</fieldset>
+{% endmacro %}

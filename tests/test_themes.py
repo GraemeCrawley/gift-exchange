@@ -103,3 +103,29 @@ def test_icon_change_changes_version(tmp_path, monkeypatch):
         assert web._static_version() != before
     finally:
         icon.write_bytes(original)
+
+
+def test_colour_picked_when_creating(client, app):
+    page = client.get("/").text
+    assert 'name="color"' in page and 'value="green" checked' in page
+    r = client.post("/create", data={"name": "Family Christmas", "color": "blue"})
+    admin = r.headers["location"]
+    assert exchange_for(app, admin).color == "blue"
+    saved = client.get(admin).text  # organizer save step, before Add to Home Screen
+    assert 'data-color="blue"' in saved
+    assert "/static/icons/blue-organizer-180.png" in saved
+
+
+def test_create_with_bad_colour_rejected(client):
+    r = client.post("/create", data={"name": "Family Christmas", "color": "chartreuse"})
+    assert r.status_code == 400
+
+
+def test_create_without_colour_is_green(client, app):
+    r = client.post("/create", data={"name": "Family Christmas"})
+    assert exchange_for(app, r.headers["location"]).color == "green"
+
+
+def test_colour_setting_says_icons_need_re_adding(client):
+    admin = create(client)
+    assert "add it to your Home Screen again" in client.get(admin).text

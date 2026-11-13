@@ -12,10 +12,10 @@ def home(request: Request):
 
 
 @router.post("/create")
-def create(request: Request, name: str = Form(""), conn=Depends(get_conn)):
+def create(request: Request, name: str = Form(""), color: str = Form(""), conn=Depends(get_conn)):
     ratelimit.check(request, "create")
     try:
-        _, raw = repo.create_exchange(conn, name)
+        _, raw = repo.create_exchange(conn, name, color)
     except repo.ValidationError as e:
-        return render(request, "home.html", {"error": str(e), "name": name}, status=400)
+        return render(request, "home.html", {"error": str(e), "name": name, "chosen": color}, status=400)
     return redirect(request, f"/a/{raw}")

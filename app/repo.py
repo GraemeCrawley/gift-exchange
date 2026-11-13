@@ -100,12 +100,16 @@ def _clean_text(value: str | None, label: str, max_len: int, required: bool = Tr
     return value
 
 
-def create_exchange(conn, name: str) -> tuple[Exchange, str]:
+def create_exchange(conn, name: str, color: str | None = None) -> tuple[Exchange, str]:
+    from app.themes import DEFAULT, THEMES
+
+    if color and color not in THEMES:
+        raise ValidationError("Pick one of the colours shown.")
     name = _clean_text(name, "Exchange name", 80)
     raw = new_token()
     cur = conn.execute(
-        "INSERT INTO exchange(name, admin_token_hash, join_token, created_at) VALUES (?,?,?,?)",
-        (name, hash_token(raw), new_token(), now()),
+        "INSERT INTO exchange(name, admin_token_hash, join_token, created_at, color) VALUES (?,?,?,?,?)",
+        (name, hash_token(raw), new_token(), now(), color or DEFAULT),
     )
     return get_exchange(conn, cur.lastrowid), raw
 
